@@ -1,28 +1,37 @@
-const dotenv = require('dotenv').config();
-const express = require('express');
-const posts = require('./controllers/post');
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const postRouter = require("./routes/post");
+const commentRouter = require("./routes/comment");
+const bodyParser = require("body-parser");
 
-const indexRouter = require('./routes/');
-const PORT = process.env.PORT;
+const { PORT, DATABASE_URL } = process.env;
 
-const app = express();
+const initApp = async () => {
+  const app = express();
 
-const mongoose = require('mongoose');
-mongoose.connect(process.env.DATABASE_URL);
+  try {
+    await mongoose.connect(DATABASE_URL);
+    console.log("Connected to Database");
+  } catch (error) {
+    console.error(error, type(error));
+  }
 
-const db = mongoose.connection;
-db.on('error', (error) => console.error(error));
-db.once('open', () => console.log('Connected to Database'));
+  app.use(bodyParser.urlencoded({ extended: true, limit: "1mb" }));
+  app.use(bodyParser.json());
 
-const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
-app.use(bodyParser.json());
+  app.use("/post", postRouter);
+  app.use("/comment", commentRouter);
 
-app.use('/', indexRouter);
+  return app;
+};
 
-const postRouter = require('./routes/post');
-app.use('/post', postRouter);
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+initApp()
+  .then((app) => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on port: ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error(error);
+  });
