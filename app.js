@@ -19,6 +19,10 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 app.use(bodyParser.json());
 
 app.use('/', indexRouter);
+
+const postRouter = require('./routes/post');
+app.use('/post', postRouter);
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
