@@ -1,0 +1,26 @@
+### Create a new post
+POST http://localhost:3000/post
+Content-Type: application/json
+
+{
+    "message": "Created Post",
+    "sender": "Not"
+}
+
+### Get all posts
+GET http://localhost:3000/post
+
+### Get a post by id
+Get http://localhost:3000/post/6777dd3de90b381ad05e612e
+
+### Get all posts by a sender
+Get http://localhost:3000/post?sender=Rotem
+
+### Update a post by id
+PUT http://localhost:3000/post/1
+Content-Type: application/json
+
+{
+    "message": "Updated Post",
+    "sender": "Rotem"
+}
