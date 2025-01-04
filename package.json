@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "devstart": "nodemon app.js",
-    "start": "node app.js"
+    "start": "node app.js",
+    "setup:db": "docker run -p 27017:27017 --restart always -v ${PWD}/data/db:/data/db -d mongo"
   },
   "author": "",
   "license": "ISC",

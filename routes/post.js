@@ -11,6 +11,6 @@ router.get('/:post_id', Post.getPostById)
 
 router.get('/', Post.getPostsBySender)
 
-router.get('/:post_id', Post.updatePost)
+router.put('/:post_id', Post.updatePost)
 
 module.exports = router;

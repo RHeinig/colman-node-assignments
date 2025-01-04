@@ -11,16 +11,52 @@ Content-Type: application/json
 GET http://localhost:3000/post
 
 ### Get a post by id
-Get http://localhost:3000/post/6777dd3de90b381ad05e612e
+Get http://localhost:3000/post/6778228f5d3ff79bcdbb71f3
 
 ### Get all posts by a sender
-Get http://localhost:3000/post?sender=Rotem
+Get http://localhost:3000/post?sender=Not
 
 ### Update a post by id
-PUT http://localhost:3000/post/1
+PUT http://localhost:3000/post/6778228f5d3ff79bcdbb71f3
 Content-Type: application/json
 
 {
     "message": "Updated Post",
     "sender": "Rotem"
 }
+
+
+
+#### Comments API
+
+### Get comment by id
+GET http://localhost:3000/comment/67782e9f5eee8c76935142f7
+
+
+#### Get comments by post id
+GET http://localhost:3000/comment?post_id=67782e9b5eee8c76935142f5
+
+
+### Create a comment
+POST http://localhost:3000/comment
+Content-Type: application/json
+
+{
+    "postId": "67782e9b5eee8c76935142f5",
+    "content": "content",
+    "senderId": "test-id2"
+}
+
+
+### Update comment
+PUT http://localhost:3000/comment/67782e9f5eee8c76935142f7
+Content-Type: application/json
+
+{
+    "content": "new comment content"
+}
+
+
+### Delete comment by id
+DELETE http://localhost:3000/comment/67782e9f5eee8c76935142f7
+
