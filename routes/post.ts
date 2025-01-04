@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const Post = require('../controllers/post');
+import Post from '../controllers/post';
 
 router.post('/', Post.addPost)
 
@@ -13,4 +13,4 @@ router.get('/', Post.getPostsBySender)
 
 router.put('/:post_id', Post.updatePost)
 
-module.exports = router;
+export = router;
