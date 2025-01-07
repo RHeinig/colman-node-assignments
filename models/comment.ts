@@ -1,4 +1,10 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
+
+interface IComment {
+  postId: string;
+  content: string;
+  senderId: string;
+}
 
 const commentSchema = new mongoose.Schema({
   postId: { type: mongoose.Schema.ObjectId, required: true, ref: "Post" },
@@ -6,6 +12,6 @@ const commentSchema = new mongoose.Schema({
   senderId: { type: String, required: true },
 });
 
-const Comment = mongoose.model("Comment", commentSchema);
+const Comment = mongoose.model<IComment>("Comment", commentSchema);
 
-module.exports = Comment;
+export default Comment;
