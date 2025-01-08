@@ -1,9 +1,10 @@
-import express from "express";
-import dotenv from "dotenv";
-import mongoose, { ConnectOptions } from "mongoose";
-import postRouter from "./routes/post";
-import commentRouter from "./routes/comment";
 import bodyParser from "body-parser";
+import dotenv from "dotenv";
+import express from "express";
+import mongoose, { ConnectOptions } from "mongoose";
+import commentRouter from "./routes/comment";
+import postRouter from "./routes/post";
+import userRouter from "./routes/user";
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ const initApp = async () => {
 
   app.use("/post", postRouter);
   app.use("/comment", commentRouter);
+  app.use("/user", userRouter);
 
   return app;
 };

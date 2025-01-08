@@ -5,23 +5,28 @@
   "main": "index.js",
   "scripts": {
     "start": "tsc && node dist/app.js",
-    "devstart": "nodemon ./src/app.ts",
+    "devstart": "nodemon --exec ts-node app.ts",
     "test": "tsc && jest --detectOpenHandles --forceExit",
     "setup:db": "docker run -p 27017:27017 --restart always -v ${PWD}/data/db:/data/db -d mongo"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.3"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "@types/express": "^4.17.1",
+    "@types/jsonwebtoken": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^8.19.0",
     "@typescript-eslint/parser": "^8.19.0",
     "eslint": "^8.57.1",
+    "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
   }

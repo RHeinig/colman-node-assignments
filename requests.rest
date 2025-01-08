@@ -60,3 +60,34 @@ Content-Type: application/json
 ### Delete comment by id
 DELETE http://localhost:3000/comment/67782e9f5eee8c76935142f7
 
+
+
+### Register new user
+POST http://localhost:3000/user/register
+Content-Type: application/json
+
+{
+    "name": "Amit",
+    "username": "test",
+    "email": "test@test.test",
+    "password": "123456"
+}
+
+
+### Login
+POST http://localhost:3000/user/login
+Content-Type: application/json
+
+{
+    "username": "test",
+    "password": "123456"
+}
+
+
+### Logout
+POST http://localhost:3000/user/logout
+Authorization: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2UyNDNlZGVkYTdmZmZkOWYwMWExOSIsImlhdCI6MTczNjMyMDIwOH0.sujoZsKazY1dWO8GzkLVxKSbsYmd5cowZMh6p3XvjkQ
+
+### Refresh Token
+POST http://localhost:3000/user/refreshToken
+Authorization: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2UyNDNlZGVkYTdmZmZkOWYwMWExOSIsImlhdCI6MTczNjMyMDI3MH0.nyW6rPp1ik0E413F0RIuTmrbM1QTS-9Igmt7-GRmO78
