@@ -2,6 +2,7 @@ import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import express from "express";
 import mongoose, { ConnectOptions } from "mongoose";
+import { errorHandler } from "./middlewares/error-handling";
 import commentRouter from "./routes/comment";
 import postRouter from "./routes/post";
 import userRouter from "./routes/user";
@@ -33,6 +34,8 @@ const initApp = async () => {
   app.use("/post", postRouter);
   app.use("/comment", commentRouter);
   app.use("/user", userRouter);
+
+  app.use(errorHandler);
 
   return app;
 };

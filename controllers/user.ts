@@ -1,5 +1,5 @@
 import { compareSync, hashSync } from "bcrypt";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/user";
 
@@ -20,13 +20,12 @@ const generateRefreshToken = (userId: string) => {
   return jwt.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET as string);
 };
 
-const register = async (req: Request, res: Response) => {
+const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { password, username, ...rest } = req.body;
     const user = await User.findOne({ username });
     if (user) {
-      res.status(400).send({ Message: "User already exists" });
-      return;
+      return res.status(400).send({ Message: "User already exists" });
     }
 
     const hashedPassword = hashSync(password, SALT_ROUNDS);
@@ -37,15 +36,11 @@ const register = async (req: Request, res: Response) => {
     });
     res.status(201).send({ Message: "New user created" });
   } catch (error) {
-    if (error instanceof Error) {
-      res.status(400).send(error.message);
-    } else {
-      res.status(500).send("An unkown error occurred: " + error);
-    }
+    next(error);
   }
 };
 
-const logout = async (req: Request, res: Response) => {
+const logout = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers[AUTHORIZATION_HEADER_FIELD];
   const token = authHeader?.split(" ")?.at(1);
   if (!token) {
@@ -73,17 +68,13 @@ const logout = async (req: Request, res: Response) => {
         await user.save();
         res.status(200).end();
       } catch (error) {
-        if (error instanceof Error) {
-          res.status(400).send(error.message);
-        } else {
-          res.status(500).send("An unkown error occurred: " + error);
-        }
+        next(error);
       }
     }
   );
 };
 
-const login = async (req: Request, res: Response) => {
+const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { password, username } = req.body;
     const user = await User.findOne({ username });
@@ -107,15 +98,15 @@ const login = async (req: Request, res: Response) => {
       refreshToken,
     });
   } catch (error) {
-    if (error instanceof Error) {
-      res.status(400).send(error.message);
-    } else {
-      res.status(500).send("An unkown error occurred: " + error);
-    }
+    next(error);
   }
 };
 
-const refreshToken = async (req: Request, res: Response) => {
+const refreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const authHeader = req.headers[AUTHORIZATION_HEADER_FIELD];
   const token = authHeader?.split(" ")?.at(1);
   if (!token) {
@@ -146,11 +137,7 @@ const refreshToken = async (req: Request, res: Response) => {
         await user.save();
         res.send({ accessToken, refreshToken });
       } catch (error) {
-        if (error instanceof Error) {
-          res.status(400).send(error.message);
-        } else {
-          res.status(500).send("An unkown error occurred: " + error);
-        }
+        next(error);
       }
     }
   );

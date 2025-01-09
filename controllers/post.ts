@@ -1,16 +1,12 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import Post from "../models/post";
 
-const addPost = async (req: Request, res: Response) => {
+const addPost = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const post = await Post.create(req.body);
     res.status(201).send(post);
   } catch (error) {
-    if (error instanceof Error) {
-      res.status(400).send(error.message);
-    } else {
-      res.status(400).send("An unkown error occurred: " + error);
-    }
+    next(error);
   }
 };
 
@@ -23,15 +19,11 @@ const getAllPosts = async (req: Request, res: Response, next: NextFunction) => {
     const posts = await Post.find();
     res.status(200).send(posts);
   } catch (error) {
-    if (error instanceof Error) {
-      res.status(400).send(error.message);
-    } else {
-      res.status(400).send("An unkown error occurred: " + error);
-    }
+    next(error);
   }
 };
 
-const getPostById = async (req: Request, res: Response) => {
+const getPostById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { post_id: postId } = req.params;
     const post = await Post.findById(postId);
@@ -44,30 +36,26 @@ const getPostById = async (req: Request, res: Response) => {
       res.status(200).send(post);
     }
   } catch (error) {
-    if (error instanceof Error) {
-      res.status(400).send(error.message);
-    } else {
-      res.status(400).send("An unkown error occurred: " + error);
-    }
+    next(error);
   }
 };
 
-const getPostsBySender = async (req: Request, res: Response) => {
+const getPostsBySender = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const senderId = req.query.sender;
 
   try {
     const posts = await Post.find({ sender: senderId });
     res.status(200).send(posts);
   } catch (error) {
-    if (error instanceof Error) {
-      res.status(400).send(error.message);
-    } else {
-      res.status(400).send("An unkown error occurred: " + error);
-    }
+    next(error);
   }
 };
 
-const updatePost = async (req: Request, res: Response) => {
+const updatePost = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const post = await Post.findByIdAndUpdate(
       req.params.post_id,
@@ -85,11 +73,7 @@ const updatePost = async (req: Request, res: Response) => {
       res.status(200).send(post);
     }
   } catch (error) {
-    if (error instanceof Error) {
-      res.status(400).send(error.message);
-    } else {
-      res.status(400).send("An unkown error occurred: " + error);
-    }
+    next(error);
   }
 };
 
