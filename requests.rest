@@ -1,10 +1,12 @@
 ### Create a new post
 POST http://localhost:3000/post
+Authorization: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3N2UyNDNlZGVkYTdmZmZkOWYwMWExOSIsImlhdCI6MTczNjQwNDQ0MCwiZXhwIjoxNzM2NDA4MDQwfQ.0YHNrCJs97TL4651X9PXmUJpDL5i-2ObFuBtKWqnmSM
 Content-Type: application/json
 
 {
     "message": "Created Post",
-    "sender": "Not"
+    "sender": "Not",
+    "userId": "677e243ededa7fffd9f01a19"
 }
 
 ### Get all posts

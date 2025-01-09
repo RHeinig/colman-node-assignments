@@ -3,6 +3,9 @@ import Post from "../models/post";
 
 const addPost = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    if ((req.user as { id: string })?.id !== req.body.userId) {
+      return res.status(401).send("Unauthorized");
+    }
     const post = await Post.create(req.body);
     res.status(201).send(post);
   } catch (error) {

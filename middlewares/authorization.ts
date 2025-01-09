@@ -8,12 +8,17 @@ const authorize = async (req: Request, res: Response, next: NextFunction) => {
   if (!token) {
     return res.status(401).send("Unauthorized");
   }
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string, (error) => {
-    if (error) {
-      return res.status(403).send(error.message);
+  jwt.verify(
+    token,
+    process.env.ACCESS_TOKEN_SECRET as string,
+    (error, userInfo) => {
+      if (error) {
+        return res.status(403).send(error.message);
+      }
+      req.user = userInfo;
+      next();
     }
-    next();
-  });
+  );
 };
 
 export { authorize };
