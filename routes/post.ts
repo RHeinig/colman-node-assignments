@@ -31,6 +31,8 @@ import { authorize } from "../middlewares/authorization";
  *  post:
  *   summary: Create a new post
  *   tags: [Post]
+ *   security:
+ *    - bearerAuth: []
  *   requestBody:
  *    required: true
  *    content:
@@ -110,6 +112,8 @@ router.get("/", Post.getPostsBySender);
  *  put:
  *   summary: Update a post by ID
  *   tags: [Post]
+ *   security:
+ *    - bearerAuth: []
  *   parameters:
  *    - in: path
  *      name: post_id
@@ -137,6 +141,8 @@ router.put("/:post_id", authorize, Post.updatePost);
  *  delete:
  *   summary: Delete a post by ID
  *   tags: [Post]
+ *   security:
+ *    - bearerAuth: []
  *   parameters:
  *    - in: path
  *      name: post_id
