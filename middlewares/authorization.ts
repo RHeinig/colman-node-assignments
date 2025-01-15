@@ -15,7 +15,7 @@ const authorize = async (req: Request, res: Response, next: NextFunction) => {
       if (error) {
         return res.status(403).send(error.message);
       }
-      req.user = userInfo;
+      req.user = userInfo as { id: string };
       next();
     }
   );

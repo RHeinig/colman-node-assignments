@@ -1,11 +1,6 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 
-const errorHandler = (
-  error: unknown,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const errorHandler = (error: unknown, req: Request, res: Response) => {
   let message = "Server Error";
   let status = 500;
   if (error instanceof Error) {

@@ -3,7 +3,13 @@ import Comment from "../models/comment";
 
 const addComment = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const comment = await Comment.create(req.body);
+    if (!req.user) {
+      return res.status(401).send({
+        Status: "Unauthorized",
+        Message: "User is not authorized",
+      });
+    }
+    const comment = await Comment.create({ ...req.body, userId: req.user.id });
     res.status(201).send(comment);
   } catch (error) {
     next(error);
@@ -52,8 +58,14 @@ const updateComment = async (
   next: NextFunction
 ) => {
   try {
-    const comment = await Comment.findByIdAndUpdate(
-      req.params.comment_id,
+    if (!req.user) {
+      return res.status(401).send({
+        Status: "Unauthorized",
+        Message: "User is not authorized",
+      });
+    }
+    const comment = await Comment.findOneAndUpdate(
+      { _id: req.params.comment_id, userId: req.user.id },
       req.body,
       {
         new: true,
@@ -79,8 +91,14 @@ const deleteComment = async (
   next: NextFunction
 ) => {
   try {
+    if (!req.user) {
+      return res.status(401).send({
+        Status: "Unauthorized",
+        Message: "User is not authorized",
+      });
+    }
     const { comment_id: commentId } = req.params;
-    await Comment.deleteOne({ _id: commentId });
+    await Comment.findOneAndDelete({ _id: commentId, userId: req.user.id });
     res.status(200).send(commentId);
   } catch (error) {
     next(error);

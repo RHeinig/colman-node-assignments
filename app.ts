@@ -1,7 +1,7 @@
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import express from "express";
-import mongoose, { ConnectOptions } from "mongoose";
+import mongoose from "mongoose";
 import { errorHandler } from "./middlewares/error-handling";
 import commentRouter from "./routes/comment";
 import postRouter from "./routes/post";
@@ -9,21 +9,19 @@ import userRouter from "./routes/user";
 
 dotenv.config();
 
-const { PORT, DATABASE_URL } = process.env;
+type AppConfig = {
+  mongoUri?: string;
+};
 
-const initApp = async () => {
+const createApp = async ({ mongoUri }: AppConfig) => {
   const app = express();
+  if (!mongoUri) {
+    mongoUri = "mongodb://localhost:27017/test";
+  }
 
   try {
-    if (DATABASE_URL) {
-      await mongoose.connect(DATABASE_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      } as ConnectOptions);
-      console.log("Connected to Database");
-    } else {
-      throw new Error("DATABASE_URL is not provided");
-    }
+    await mongoose.connect(mongoUri);
+    console.log("Connected to Database");
   } catch (error) {
     console.error(error, "Error connecting to Database");
   }
@@ -40,12 +38,4 @@ const initApp = async () => {
   return app;
 };
 
-initApp()
-  .then((app) => {
-    app.listen(PORT, () => {
-      console.log(`Server is running on port: ${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error(error);
-  });
+export { createApp };

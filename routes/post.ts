@@ -12,6 +12,8 @@ router.get("/:post_id", Post.getPostById);
 
 router.get("/", Post.getPostsBySender);
 
-router.put("/:post_id", Post.updatePost);
+router.put("/:post_id", authorize, Post.updatePost);
+
+router.delete("/:post_id", authorize, Post.deletePost);
 
 export = router;
