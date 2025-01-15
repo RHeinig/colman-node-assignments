@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import Comment from "../models/comment";
+import Post from "../models/post";
 
 const addComment = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -9,6 +10,15 @@ const addComment = async (req: Request, res: Response, next: NextFunction) => {
         Message: "User is not authorized",
       });
     }
+
+    const post = await Post.findById(req.body.postId);
+    if (!post) {
+      return res.status(404).send({
+        Status: "Not Found",
+        Message: `Post ${req.body.postId} not found`,
+      });
+    }
+
     const comment = await Comment.create({ ...req.body, userId: req.user.id });
     res.status(201).send(comment);
   } catch (error) {
@@ -64,6 +74,7 @@ const updateComment = async (
         Message: "User is not authorized",
       });
     }
+
     const comment = await Comment.findOneAndUpdate(
       { _id: req.params.comment_id, userId: req.user.id },
       req.body,

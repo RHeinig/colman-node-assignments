@@ -29,7 +29,7 @@ const createApp = async ({ mongoUri }: AppConfig) => {
   }
 
   if (process.env.NODE_ENV === "development") {
-    const options = {
+    const options: swaggerJsdoc.Options = {
       definition: {
         openapi: "3.0.0",
         info: {
@@ -38,6 +38,15 @@ const createApp = async ({ mongoUri }: AppConfig) => {
           description: "A simple social media API",
         },
         servers: [{ url: "http://localhost:3000" }],
+        components: {
+          securitySchemes: {
+            Authorization: {
+              type: "apiKey",
+              in: "header",
+              name: "Authorization",
+            },
+          },
+        },
       },
       apis: ["./routes/*.ts"],
     };
