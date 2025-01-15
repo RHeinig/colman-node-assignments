@@ -4,6 +4,8 @@ import mongoose, { ConnectOptions } from "mongoose";
 import postRouter from "./routes/post";
 import commentRouter from "./routes/comment";
 import bodyParser from "body-parser";
+import swaggerUI from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
 
 dotenv.config();
 
@@ -24,6 +26,24 @@ const initApp = async () => {
     }
   } catch (error) {
     console.error(error, "Error connecting to Database");
+  }
+
+  if (process.env.NODE_ENV === "development") {
+    const options = {
+      definition: {
+        openapi: "3.0.0",
+        info: {
+          title: "Social Media API",
+          version: "1.0.0",
+          description: "A simple social media API",
+        },
+        servers: [{ url: "http://localhost:3000" }],
+      },
+      apis: ["./routes/*.ts"],
+    }
+    
+    const specs = swaggerJsdoc(options);
+    app.use("/docs", swaggerUI.serve, swaggerUI.setup(specs));
   }
 
   app.use(bodyParser.urlencoded({ extended: true, limit: "1mb" }));
