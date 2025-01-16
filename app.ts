@@ -1,35 +1,35 @@
-import express from "express";
-import dotenv from "dotenv";
-import mongoose, { ConnectOptions } from "mongoose";
-import postRouter from "./routes/post";
-import commentRouter from "./routes/comment";
 import bodyParser from "body-parser";
-import swaggerUI from "swagger-ui-express";
+import dotenv from "dotenv";
+import express from "express";
+import mongoose from "mongoose";
 import swaggerJsdoc from "swagger-jsdoc";
+import swaggerUI from "swagger-ui-express";
+import { errorHandler } from "./middlewares/error-handling";
+import commentRouter from "./routes/comment";
+import postRouter from "./routes/post";
+import userRouter from "./routes/user";
 
 dotenv.config();
 
-const { PORT, DATABASE_URL } = process.env;
+type AppConfig = {
+  mongoUri?: string;
+};
 
-const initApp = async () => {
+const createApp = async ({ mongoUri }: AppConfig) => {
   const app = express();
+  if (!mongoUri) {
+    mongoUri = "mongodb://localhost:27017/test";
+  }
 
   try {
-    if (DATABASE_URL) {
-      await mongoose.connect(DATABASE_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      } as ConnectOptions);
-      console.log("Connected to Database");
-    } else {
-      throw new Error("DATABASE_URL is not provided");
-    }
+    await mongoose.connect(mongoUri);
+    console.log("Connected to Database");
   } catch (error) {
     console.error(error, "Error connecting to Database");
   }
 
   if (process.env.NODE_ENV === "development") {
-    const options = {
+    const options: swaggerJsdoc.Options = {
       definition: {
         openapi: "3.0.0",
         info: {
@@ -38,10 +38,19 @@ const initApp = async () => {
           description: "A simple social media API",
         },
         servers: [{ url: "http://localhost:3000" }],
+        components: {
+          securitySchemes: {
+            Authorization: {
+              type: "apiKey",
+              in: "header",
+              name: "Authorization",
+            },
+          },
+        },
       },
       apis: ["./routes/*.ts"],
-    }
-    
+    };
+
     const specs = swaggerJsdoc(options);
     app.use("/docs", swaggerUI.serve, swaggerUI.setup(specs));
   }
@@ -51,16 +60,11 @@ const initApp = async () => {
 
   app.use("/post", postRouter);
   app.use("/comment", commentRouter);
+  app.use("/user", userRouter);
+
+  app.use(errorHandler);
 
   return app;
 };
 
-initApp()
-  .then((app) => {
-    app.listen(PORT, () => {
-      console.log(`Server is running on port: ${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error(error);
-  });
+export { createApp };

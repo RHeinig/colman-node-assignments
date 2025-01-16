@@ -1,7 +1,8 @@
-import express from 'express';
+import express from "express";
 const router = express.Router();
 
-import Post from '../controllers/post';
+import Post from "../controllers/post";
+import { authorize } from "../middlewares/authorization";
 
 /**
  * @swagger
@@ -11,17 +12,32 @@ import Post from '../controllers/post';
  *    type: object
  *    required:
  *     - message
- *     - sender
  *    properties:
  *     message:
  *      type: string
  *      description: The content of the post
- *     sender:
- *      type: string
- *      description: The ID of the post creator
  *    example:
  *     message: 'This is a post'
- *     sender: '60f7b3b4b6f1f3f8b4f3b1b1'
+ *  responses:
+ *   PostResponse:
+ *    type: object
+ *    properties:
+ *     userId:
+ *      type: string
+ *     message:
+ *      type: string
+ *     postId:
+ *      type: string
+ *     createdAt:
+ *      type: string
+ *      format: date-time
+ *     updatedAt:
+ *      type: string
+ *      format: date-time
+ *    example:
+ *     userId: '60f7b3b4b6f1f3f8b4f3b1b2'
+ *     message: 'This is a post'
+ *     postId: '60f7b3b4b6f1f3f8b4f3b1b1'
  */
 
 /**
@@ -30,6 +46,8 @@ import Post from '../controllers/post';
  *  post:
  *   summary: Create a new post
  *   tags: [Post]
+ *   security:
+ *      - Authorization: []
  *   requestBody:
  *    required: true
  *    content:
@@ -42,11 +60,11 @@ import Post from '../controllers/post';
  *     content:
  *      application/json:
  *       schema:
- *        $ref: '#/components/schemas/Post'
+ *        $ref: '#/components/responses/PostResponse'
  *    400:
  *     description: Post creation failed
  * */
-router.post('/', Post.addPost)
+router.post("/", authorize, Post.addPost);
 
 /**
  * @swagger
@@ -67,13 +85,13 @@ router.post('/', Post.addPost)
  *     content:
  *      application/json:
  *       schema:
- *        $ref: '#/components/schemas/Post'
+ *        $ref: '#/components/responses/PostResponse'
  *    404:
  *     description: The post was not found
  *    400:
  *     description: Failed to get the post
  * */
-router.get('/:post_id', Post.getPostById)
+router.get("/:post_id", Post.getPostById);
 
 /**
  * @swagger
@@ -96,12 +114,12 @@ router.get('/:post_id', Post.getPostById)
  *       schema:
  *        type: array
  *        items:
- *         $ref: '#/components/schemas/Post'
+ *         $ref: '#/components/responses/PostResponse'
  *    400:
  *     description: Failed to get posts
  * */
-router.get('/', Post.getAllPosts)
-router.get('/', Post.getPostsBySender)
+router.get("/", Post.getAllPosts);
+router.get("/", Post.getPostsBySender);
 
 /**
  * @swagger
@@ -109,6 +127,43 @@ router.get('/', Post.getPostsBySender)
  *  put:
  *   summary: Update a post by ID
  *   tags: [Post]
+ *   security:
+ *      - Authorization: []
+ *   parameters:
+ *    - in: path
+ *      name: post_id
+ *      required: true
+ *      description: The ID of the post
+ *      schema:
+ *       type: string
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       $ref: '#/components/schemas/Post'
+ *   responses:
+ *    200:
+ *     description: The post is updated
+ *     content:
+ *      application/json:
+ *       schema:
+ *        $ref: '#/components/responses/PostResponse'
+ *    404:
+ *     description: The post was not found
+ *    400:
+ *     description: Failed to update the post
+ * */
+router.put("/:post_id", authorize, Post.updatePost);
+
+/**
+ * @swagger
+ * /post/{post_id}:
+ *  delete:
+ *   summary: Delete a post by ID
+ *   tags: [Post]
+ *   security:
+ *      - Authorization: []
  *   parameters:
  *    - in: path
  *      name: post_id
@@ -118,16 +173,14 @@ router.get('/', Post.getPostsBySender)
  *       type: string
  *   responses:
  *    200:
- *     description: The post is updated
+ *     description: The post is deleted
  *     content:
  *      application/json:
  *       schema:
- *        $ref: '#/components/schemas/Post'
- *    404:
- *     description: The post was not found
+ *        $ref: '#/components/responses/PostResponse'
  *    400:
- *     description: Failed to update the post
+ *     description: Failed to delete the post
  * */
-router.put('/:post_id', Post.updatePost)
+router.delete("/:post_id", authorize, Post.deletePost);
 
 export = router;
