@@ -5,7 +5,7 @@ import { createApp } from "../../app";
 import { generateRandomString } from "../../common";
 import Comment from "../../models/comment";
 import Post from "../../models/post";
-import { describe, beforeAll, afterAll, expect } from "@jest/globals";
+import { describe, beforeAll, afterAll, expect, test } from "@jest/globals";
 
 const USERNAME = "user123";
 const PASSWORD = "password";
