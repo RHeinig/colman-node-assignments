@@ -144,9 +144,39 @@ const refreshToken = async (
   );
 };
 
+const getUserById = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).send({ Message: "User not found" });
+    }
+    res.status(200).send(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      return res.status(401).send({ Message: "Unauthorized" });
+    }
+    console.log(req.user)
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).send({ Message: "User not found" });
+    }
+    res.status(200).send(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   login,
   logout,
   refreshToken,
   register,
+  getUserById,
+  getUserInfo,
 };

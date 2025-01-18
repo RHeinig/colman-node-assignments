@@ -2,6 +2,7 @@ import express from "express";
 const router = express.Router();
 
 import User from "../controllers/user";
+import { authorize } from "../middlewares/authorization";
 
 /**
  * @swagger
@@ -111,5 +112,42 @@ router.post("/refreshToken", User.refreshToken);
  *     description: User logged out successfully
  */
 router.post("/logout", User.logout);
+
+/**
+ * @swagger
+ * /user/{id}:
+ *  get:
+ *   summary: Get user info by ID
+ *   tags: [User]
+ *   parameters:
+ *    - in: path
+ *      name: id
+ *      required: true
+ *      description: The ID of the user
+ *      schema:
+ *       type: string
+ *   responses:
+ *    200:
+ *     description: User info retrieved successfully
+ *    404:
+ *     description: User not found
+ */
+router.get("/:id", User.getUserById);
+
+/**
+ * @swagger
+ * /user/info:
+ *  get:
+ *   summary: Get user info
+ *   tags: [User]
+ *   security:
+ *      - Authorization: []
+ *   responses:
+ *    200:
+ *     description: User info retrieved successfully
+ *    401:
+ *     description: Unauthorized
+ */
+router.get("/", authorize, User.getUserInfo);
 
 export = router;
