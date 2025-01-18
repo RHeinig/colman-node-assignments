@@ -4,6 +4,8 @@ import request from "supertest";
 import { createApp } from "../../app";
 import { generateRandomString } from "../../common";
 import User from "../../models/user";
+import { describe, it, beforeAll, afterAll, expect } from "@jest/globals";
+
 describe("User API", () => {
   let app: Express;
   let refreshToken: string;
@@ -57,8 +59,16 @@ describe("User API", () => {
     expect(response.body).toHaveProperty("refreshToken");
     refreshToken = response.body.refreshToken;
   });
+  
+  it("User Not Found", async () => {
+    const response = await request(app).post("/user/login").send({
+      username: "wrong username",
+      password,
+    });
+    expect(response.statusCode).toEqual(404);
+  });
 
-  it("Invalid Login", async () => {
+  it("Unauthorized Login", async () => {
     const response = await request(app).post("/user/login").send({
       username,
       password: "wrong password",
@@ -88,5 +98,12 @@ describe("User API", () => {
       .post("/user/logout")
       .set("authorization", `Bearer ${refreshToken}`);
     expect(response.statusCode).toEqual(200);
+  });
+
+  it("Invalid Logout", async () => {
+    const response = await request(app)
+      .post("/user/logout")
+      .set("authorization", `Bearer ${refreshToken}`);
+    expect(response.statusCode).toEqual(403);
   });
 });

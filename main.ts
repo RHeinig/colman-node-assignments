@@ -1,3 +1,6 @@
+// Rotem Heinig 322401233
+// Amit Edrei 211745385
+
 import { createApp } from "./app";
 
 const { PORT, DATABASE_URL } = process.env;

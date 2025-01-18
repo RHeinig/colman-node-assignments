@@ -5,6 +5,7 @@ import { createApp } from "../../app";
 import { generateRandomString } from "../../common";
 import Comment from "../../models/comment";
 import Post from "../../models/post";
+import { describe, beforeAll, afterAll, expect, test } from "@jest/globals";
 
 const USERNAME = "user123";
 const PASSWORD = "password";
@@ -75,6 +76,27 @@ describe("Comment API", () => {
     expect(response.body.content).toBe("This is a test comment");
   });
 
+  test("Create Comment with no Authorization", async () => {
+    const response = await request(app).post("/comment").send({
+      userId,
+      postId,
+      content: "This is a test comment",
+    });
+    expect(response.statusCode).toBe(401);
+  });
+
+  test("Create Comment with invalid Post ID", async () => {
+    const response = await request(app)
+      .post("/comment")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({
+        userId,
+        postId: "invalid_post_id",
+        content: "This is a test comment",
+      });
+    expect(response.statusCode).toBe(404);
+  });
+
   test("Get Comments", async () => {
     const response = await request(app).get(`/comment?post_id=${postId}`);
     expect(response.statusCode).toBe(200);
@@ -99,5 +121,24 @@ describe("Comment API", () => {
       .set("Authorization", `Bearer ${accessToken}`);
     expect(response.statusCode).toBe(200);
     expect(response.text).toBe(commentId);
+  });
+  
+  test("Delete Comment with no Authorization", async () => {
+    const response = await request(app)
+      .delete(`/comment/${commentId}`);
+    expect(response.statusCode).toBe(401);
+  });
+
+  test("Get Comment by ID", async () => {
+    const response = await request(app)
+    .get(`/comment/${commentId}`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body._id).toBe(commentId);
+  });
+
+  test("Get Comment by Invalid ID", async () => {
+    const response = await request(app)
+    .get(`/comment/invalid_id`);
+    expect(response.statusCode).toBe(404);
   });
 });
