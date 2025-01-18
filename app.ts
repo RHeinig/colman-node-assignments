@@ -1,6 +1,7 @@
 import bodyParser from "body-parser";
+import cors from "cors";
 import dotenv from "dotenv";
-import express from "express";
+import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
@@ -57,11 +58,15 @@ const createApp = async ({ mongoUri }: AppConfig) => {
 
   app.use(bodyParser.urlencoded({ extended: true, limit: "1mb" }));
   app.use(bodyParser.json());
+  app.use(cors());
 
   app.use("/post", postRouter);
   app.use("/comment", commentRouter);
   app.use("/user", userRouter);
 
+  app.use((req: Request, res: Response) => {
+    res.status(404).send({ error: "Not Found" });
+  });
   app.use(errorHandler);
 
   return app;
