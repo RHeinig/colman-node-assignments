@@ -1,11 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { setCookie } from "../../utils/auth";
+import { useGoogleLogin } from "@react-oauth/google";
 
 const loginSchema = z.object({
   username: z.string(),
@@ -27,6 +28,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     resolver: zodResolver(loginSchema),
   });
   const navigate = useNavigate();
+  const location = useLocation();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const onSubmit = async (data: LoginFormInputs) => {
@@ -36,8 +38,8 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
         "Authorization"
       ] = `Bearer ${response.data.accessToken}`;
 
-      setIsLoggedIn(true)
-      
+      setIsLoggedIn(true);
+
       setCookie("refreshToken", response.data.refreshToken, 7);
       navigate("/profile");
     } catch (error) {
@@ -46,16 +48,48 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     }
   };
 
+  const googleLogin = useGoogleLogin({
+    onError: () => {
+      setErrorMessage("Google login failed. Please try again.");
+    },
+    flow: "auth-code",
+    ux_mode: "redirect",
+    redirect_uri: "http://localhost:5173/login",
+  });
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const code = queryParams.get("code");
+
+    if (code) {
+      try {
+        axios.post("/user/google/login", {
+          code: code,
+        }).then((response) => {
+          axios.defaults.headers.common[
+            "Authorization"
+          ] = `Bearer ${response.data.accessToken}`;
+          setIsLoggedIn(true);
+          navigate("/profile");
+        });
+      } catch (error) {
+        setErrorMessage("Google login failed. Please try again.");
+        console.error("Google login failed", error);
+      }
+    }
+  }, [navigate, setIsLoggedIn, location, googleLogin]);
+
   return (
     <div className="container mt-5">
       <h2 className="mb-4">Login</h2>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-3">
           <label className="form-label">Username</label>
-          <input 
+          <input
             autoComplete="username"
             className="form-control"
-            {...register("username")} />
+            {...register("username")}
+          />
           {errors.username && (
             <p className="text-danger">{errors.username.message}</p>
           )}
@@ -76,6 +110,11 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
         <button type="submit" className="btn btn-primary">
           Login
         </button>
+        <div className="mt-3">
+          <button className="btn btn-secondary" onClick={() => googleLogin()}>
+            Login with Google
+          </button>
+        </div>{" "}
       </form>
       <button
         className="btn btn-link mt-3"

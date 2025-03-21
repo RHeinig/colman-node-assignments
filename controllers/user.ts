@@ -2,9 +2,21 @@ import { compareSync, hashSync } from "bcrypt";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/user";
+import { OAuth2Client } from "google-auth-library";
+import dotenv from "dotenv";
 
 const SALT_ROUNDS = 10;
 const AUTHORIZATION_HEADER_FIELD = "authorization";
+
+dotenv.config();
+const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
+
+
+const googleClient = new OAuth2Client({
+  clientId: GOOGLE_CLIENT_ID,
+  clientSecret: GOOGLE_CLIENT_SECRET,
+  redirectUri: "http://localhost:5173/login",
+});
 
 interface JwtPayload {
   id: string;
@@ -103,6 +115,67 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const getGoogleLogin = async (req: Request, res: Response, next: NextFunction) => {  
+  try {    
+    const { code } = req.body;
+
+    if (!code) {
+      return res.status(400).send({ Message: "Google Invalid request" });
+    }
+    
+    const { tokens } = await googleClient.getToken(code);
+    const googleIdToken = tokens.id_token;
+
+    if (!googleIdToken) {
+      return res.status(400).send({ Message: "Google Invalid request" });
+    }
+
+    const googleUser = await googleClient.verifyIdToken({
+      idToken: googleIdToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const googlePayload = googleUser.getPayload();
+
+    if (!googlePayload) {
+      return res.status(400).send({ Message: "Google Invalid request" });
+    }
+
+    const { email, name } = googlePayload;
+
+    if (!email) {
+      return res.status(400).send({ Message: "Google Invalid request" });
+    }
+
+    let user = await User.findOne({email})
+
+    if (!user) {
+      user = await User.create({
+        username: email.split("@")[0],
+        email,
+        name: name || email.split("@")[0],
+        hashedPassword: "Google",
+        tokens: []
+      })
+    }
+
+    const accessToken = generateAccessToken(user.id);
+    const refreshToken = generateRefreshToken(user.id);
+
+    user.tokens.push(refreshToken);
+    await user.save();
+
+    res.status(200).send({
+      id: user.id,
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+    
+
 const refreshToken = async (
   req: Request,
   res: Response,
@@ -192,6 +265,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
 
 export default {
   login,
+  getGoogleLogin,
   logout,
   refreshToken,
   register,

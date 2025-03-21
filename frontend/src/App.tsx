@@ -15,6 +15,7 @@ import Register from "./pages/Register";
 import { fetchAccessToken, removeCookie } from "./utils/auth";
 
 axios.defaults.baseURL = "http://localhost:3000";
+axios.defaults.withCredentials = true;
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -58,6 +59,7 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+        <Route path="auth/google/callback" element={<Navigate to="/login" />} />
         <Route path="/profile/:id?" element={<Profile />} />
         <Route
           path="/"

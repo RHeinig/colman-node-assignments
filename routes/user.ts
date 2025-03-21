@@ -85,6 +85,29 @@ router.post("/login", User.login);
 
 /**
  * @swagger
+ * /user/google/login:
+ *  post:
+ *   summary: Login a user with Google
+ *   tags: [User]
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       type: object
+ *       required:
+ *        - credential
+ *       properties:
+ *        credential:
+ *         type: string
+ *   responses:
+ *    200:
+ *     description: User logged in successfully
+ */
+router.post("/google/login", User.getGoogleLogin);
+
+/**
+ * @swagger
  * /user/refreshToken:
  *  post:
  *   summary: Refresh user token
