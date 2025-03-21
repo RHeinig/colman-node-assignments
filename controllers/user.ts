@@ -2,8 +2,6 @@ import { compareSync, hashSync } from "bcrypt";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/user";
-import { OAuth2Client } from "google-auth-library";
-import { loginWithGoogle } from "../middlewares/authorization";
 
 const SALT_ROUNDS = 10;
 const AUTHORIZATION_HEADER_FIELD = "authorization";
@@ -194,7 +192,6 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
 
 export default {
   login,
-  getGoogleLogin,
   logout,
   refreshToken,
   register,
