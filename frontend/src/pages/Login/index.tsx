@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useState } from "react";
-import { get, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { setCookie } from "../../utils/auth";
@@ -12,9 +12,13 @@ const loginSchema = z.object({
   password: z.string().min(6),
 });
 
+interface LoginProps {
+  setIsLoggedIn: (value: boolean) => void;
+}
+
 type LoginFormInputs = z.infer<typeof loginSchema>;
 
-const Login: React.FC = () => {
+const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
   const {
     register,
     handleSubmit,
@@ -31,6 +35,9 @@ const Login: React.FC = () => {
       axios.defaults.headers.common[
         "Authorization"
       ] = `Bearer ${response.data.accessToken}`;
+
+      setIsLoggedIn(true)
+      
       setCookie("refreshToken", response.data.refreshToken, 7);
       navigate("/profile");
     } catch (error) {

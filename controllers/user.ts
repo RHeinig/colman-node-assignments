@@ -177,7 +177,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const { updatedUser } = req.body;
     const user = await User.findById(id);
-    console.log(updatedUser);
+
     if (!user) {
       return res.status(404).send({ Message: "User not found" });
     } else {

@@ -19,7 +19,8 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.3",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "typescript-cookie": "^1.0.6"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
