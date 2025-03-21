@@ -8,7 +8,6 @@ export interface IUser {
   name: string;
   hashedPassword: string;
   tokens: string[];
-  refreshTokens?: string[];
 }
 
 const userSchema = new mongoose.Schema({
