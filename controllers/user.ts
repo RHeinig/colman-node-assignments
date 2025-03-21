@@ -2,6 +2,8 @@ import { compareSync, hashSync } from "bcrypt";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/user";
+import { OAuth2Client } from "google-auth-library";
+import { loginWithGoogle } from "../middlewares/authorization";
 
 const SALT_ROUNDS = 10;
 const AUTHORIZATION_HEADER_FIELD = "authorization";
@@ -172,11 +174,31 @@ const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const updateUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { updatedUser } = req.body;
+    const user = await User.findById(id);
+    console.log(updatedUser);
+    if (!user) {
+      return res.status(404).send({ Message: "User not found" });
+    } else {
+      user.set(updatedUser);
+      await user.save();
+      res.status(200).send({ Message: "User updated successfully" });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   login,
+  getGoogleLogin,
   logout,
   refreshToken,
   register,
   getUserById,
   getUserInfo,
+  updateUser
 };

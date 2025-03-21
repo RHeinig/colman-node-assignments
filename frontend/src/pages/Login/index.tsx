@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import { get, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { setCookie } from "../../utils/auth";
@@ -45,7 +45,10 @@ const Login: React.FC = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-3">
           <label className="form-label">Username</label>
-          <input className="form-control" {...register("username")} />
+          <input 
+            autoComplete="username"
+            className="form-control"
+            {...register("username")} />
           {errors.username && (
             <p className="text-danger">{errors.username.message}</p>
           )}
@@ -54,6 +57,7 @@ const Login: React.FC = () => {
           <label className="form-label">Password</label>
           <input
             type="password"
+            autoComplete="current-password"
             className="form-control"
             {...register("password")}
           />
