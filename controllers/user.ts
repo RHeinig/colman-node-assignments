@@ -1,4 +1,7 @@
 import { compareSync, hashSync } from "bcrypt";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/user";
@@ -11,6 +14,38 @@ const AUTHORIZATION_HEADER_FIELD = "authorization";
 dotenv.config();
 const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png|gif/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error("Error: Images Only!"));
+    }
+  },
+  limits: { fileSize: 5*1024*1024 },
+});
+
+const uploadDir = "uploads/";
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 const googleClient = new OAuth2Client({
   clientId: GOOGLE_CLIENT_ID,
@@ -36,6 +71,7 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { password, username, ...rest } = req.body;
     const user = await User.findOne({ username });
+
     if (user) {
       return res.status(400).send({ Message: "User already exists" });
     }
@@ -115,14 +151,18 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const getGoogleLogin = async (req: Request, res: Response, next: NextFunction) => {  
-  try {    
+const getGoogleLogin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
     const { code } = req.body;
 
     if (!code) {
       return res.status(400).send({ Message: "Google Invalid request" });
     }
-    
+
     const { tokens } = await googleClient.getToken(code);
     const googleIdToken = tokens.id_token;
 
@@ -141,13 +181,13 @@ const getGoogleLogin = async (req: Request, res: Response, next: NextFunction) =
       return res.status(400).send({ Message: "Google Invalid request" });
     }
 
-    const { email, name } = googlePayload;
+    const { email, name, picture } = googlePayload;
 
     if (!email) {
       return res.status(400).send({ Message: "Google Invalid request" });
     }
 
-    let user = await User.findOne({email})
+    let user = await User.findOne({ email });
 
     if (!user) {
       user = await User.create({
@@ -155,8 +195,12 @@ const getGoogleLogin = async (req: Request, res: Response, next: NextFunction) =
         email,
         name: name || email.split("@")[0],
         hashedPassword: "Google",
-        tokens: []
-      })
+        tokens: [],
+        profileImage: picture,
+      });
+    } else if (picture && !user.picture) {
+      user.picture = picture;
+      await user.save();
     }
 
     const accessToken = generateAccessToken(user.id);
@@ -174,7 +218,6 @@ const getGoogleLogin = async (req: Request, res: Response, next: NextFunction) =
     next(error);
   }
 };
-    
 
 const refreshToken = async (
   req: Request,
@@ -234,7 +277,7 @@ const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).send({ Message: "Unauthorized" });
     }
-    console.log(req.user)
+    console.log(req.user);
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).send({ Message: "User not found" });
@@ -253,11 +296,15 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
 
     if (!user) {
       return res.status(404).send({ Message: "User not found" });
-    } else {
-      user.set(updatedUser);
-      await user.save();
-      res.status(200).send({ Message: "User updated successfully" });
     }
+
+    if (req.file) {
+      user.picture = `/uploads/${req.file.filename}`;
+    }
+
+    user.set(updatedUser);
+    await user.save();
+    res.status(200).send({ Message: "User updated successfully" });
   } catch (error) {
     next(error);
   }
@@ -271,5 +318,5 @@ export default {
   register,
   getUserById,
   getUserInfo,
-  updateUser
+  updateUser: [upload.single("image"), updateUser],
 };

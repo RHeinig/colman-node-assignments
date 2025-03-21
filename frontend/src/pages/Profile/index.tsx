@@ -8,31 +8,72 @@ interface User {
   _id: string;
   name: string;
   email: string;
+  profileImage?: string;
 }
+
+const BACKEND_URL = "http://localhost:3000";
 
 const Profile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [user, setUser] = useState<User>();
   const [picture, setPicture] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [name, setName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string>();
   const navigate = useNavigate();
 
+  const getUserPicture = (picturePath: string) => {
+    // Google images
+    if (picturePath.startsWith("https://")) {
+      return picturePath;
+    } else {
+      // Local images
+      if (picturePath.startsWith("/uploads/")) {
+        return `${BACKEND_URL}${picturePath}`;
+      }
+    }
+
+    return "";
+  };
+
   const handleEditClick = () => {
     setIsEditing(true);
   };
 
   const handleSaveClick = async () => {
-    await axios.put(`/user/${user?._id}`, {
-      updatedUser: {
-        name: name,
-        picture: picture,
-      },
-    });
+    try {
+      const formData = new FormData();
+      formData.append("updatedUser", JSON.stringify({ name }));
 
-    setIsEditing(false);
+      if (selectedFile) {
+        formData.append("image", selectedFile);
+      }
+
+      const response = await axios.put(`/user/${user?._id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.status === 200) {
+        setUser((prev) => (prev ? { ...prev, name } : prev));
+        if (selectedFile) {
+          const updatedUser = await axios.get(`/user/${user?._id}`);
+          setPicture(updatedUser.data.profileImage || "/default_profile.png");
+          setSelectedFile(null);
+        }
+
+        setIsEditing(false);
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || "Failed to update profile");
+      } else {
+        setError("An unknown error occurred");
+      }
+    }
   };
 
   const handleUsernameChange = (
@@ -44,6 +85,7 @@ const Profile: React.FC = () => {
   const handlePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       const imageUrl = URL.createObjectURL(file);
       setPicture(imageUrl);
     }
@@ -55,12 +97,7 @@ const Profile: React.FC = () => {
         const response = await axios.get(`/user/${id || ""}`);
         setUser(response.data);
         setName(response.data.name);
-
-        if (response.data.picture) {
-          setPicture(response.data.picture);
-        } else {
-          setPicture("/default_profile.png");
-        }
+        setPicture(getUserPicture(response.data.picture) || "/default_profile.png");
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.status === 401) {
           navigate("/login");
