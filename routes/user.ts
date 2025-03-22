@@ -85,6 +85,29 @@ router.post("/login", User.login);
 
 /**
  * @swagger
+ * /user/google/login:
+ *  post:
+ *   summary: Login a user with Google
+ *   tags: [User]
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       type: object
+ *       required:
+ *        - credential
+ *       properties:
+ *        credential:
+ *         type: string
+ *   responses:
+ *    200:
+ *     description: User logged in successfully
+ */
+router.post("/google/login", User.getGoogleLogin);
+
+/**
+ * @swagger
  * /user/refreshToken:
  *  post:
  *   summary: Refresh user token
@@ -149,5 +172,35 @@ router.get("/:id", User.getUserById);
  *     description: Unauthorized
  */
 router.get("/", authorize, User.getUserInfo);
+
+
+/**
+ * @swagger
+ * /user/{id}:
+ *  put:
+ *   summary: Update user info
+ *   tags: [User]
+ *   security:
+ *      - Authorization: []
+ *   parameters:
+ *    - in: path
+ *      name: id
+ *      required: true
+ *      description: The ID of the user
+ *      schema:
+ *       type: string
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       $ref: '#/components/schemas/User'
+ *   responses:
+ *    200:
+ *     description: User updated successfully
+ *    404:
+ *     description: User not found
+ */
+router.put("/:id", User.updateUser);
 
 export = router;
