@@ -7,7 +7,6 @@ import { BACKEND_URL } from '../../App';
 import Post from '../../components/Post';
 import GlobalContext from '../../contexts/global';
 
-
 interface PostData {
     _id: string;
     message: string;
@@ -39,14 +38,13 @@ const getImageUrl = (picturePath?: string) => {
 };
 
 const Home: React.FC = () => {
-    const [posts, setPosts] = useState<PostData[]>([]);
+    const [posts, setPosts] = useState<PostData[] | undefined>();
     const [allPosts, setAllPosts] = useState<PostData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [start, setStart] = useState(0);
     const [limit, setLimit] = useState(10);
-    const [retries, setRetries] = useState(0);
     const [showOnlyMyPosts, setShowOnlyMyPosts] = useState(false);
     const { user } = useContext(GlobalContext)
     const {
@@ -95,9 +93,6 @@ const Home: React.FC = () => {
             try {
                 const response = await axios.get(`/post/?start=${start}&limit=${limit}${showOnlyMyPosts && user ? `&sender=${user._id}` : ""}`);
                 setPosts(response.data);
-                if (posts.length > 0) {
-                    setRetries(0);
-                }
             } catch (err) {
                 setError('Failed to fetch posts');
                 console.error('Error fetching posts:', err);
@@ -105,15 +100,16 @@ const Home: React.FC = () => {
                 setLoading(false);
             }
         };
-        if (posts.length !== 0 || retries < 3) {
+        if (!posts || posts.length > 0) {
             setLoading(true);
             fetchPosts();
-            setRetries(retries + 1);
         }
     }, [start, limit, showOnlyMyPosts]);
 
     useEffect(() => {
-        setAllPosts([...allPosts, ...posts]);
+        if (posts) {
+            setAllPosts([...allPosts, ...posts]);
+        }
     }, [posts]);
 
     if (loading) {
@@ -151,7 +147,9 @@ const Home: React.FC = () => {
                     const responseWithImage = await axios.post('/post/upload-image', formData);
                     post.image = responseWithImage.data.imageUrl;
                 }
-                setPosts([post, ...posts]);
+                if (posts) {
+                    setPosts([post, ...posts]);
+                }
             }
         } catch (error) {
             console.error('Error creating post:', error);
@@ -162,11 +160,10 @@ const Home: React.FC = () => {
     return (
         <div className="container py-4">
             <h1 className="display-4 mb-4">Home Feed</h1>
-            {/* show only my posts option */}
             <div className="mb-3">
                 <button className={`btn ${showOnlyMyPosts ? "btn-primary" : "btn-secondary"}`} onClick={() => setShowOnlyMyPosts(prev => {
                     setStart(0)
-                    setPosts([])
+                    setPosts(undefined)
                     setAllPosts([])
                     return !prev
                 })}>
