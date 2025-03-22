@@ -2,7 +2,7 @@ import express from "express";
 const router = express.Router();
 
 import User from "../controllers/user";
-import { authorize } from "../middlewares/authorization";
+import { authorize, optionalAuthorize } from "../middlewares/authorization";
 
 /**
  * @swagger
@@ -142,6 +142,8 @@ router.post("/logout", User.logout);
  *  get:
  *   summary: Get user info by ID
  *   tags: [User]
+ *   security:
+ *      - Authorization: []
  *   parameters:
  *    - in: path
  *      name: id
@@ -155,7 +157,7 @@ router.post("/logout", User.logout);
  *    404:
  *     description: User not found
  */
-router.get("/:id", User.getUserById);
+router.get("/:id", optionalAuthorize, User.getUserById);
 
 /**
  * @swagger

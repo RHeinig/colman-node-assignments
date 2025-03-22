@@ -1,18 +1,20 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-interface IPost {
-  userId: mongoose.Types.ObjectId;
-  message: string;
+export interface IPost extends Document {
+    message: string;
+    userId: string;
+    likes: string[];
+    imageUrl?: string;
 }
 
-const postSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.ObjectId, required: true, ref: "User" },
-  message: {
-    type: String,
-    required: true,
-  },
-});
+const postSchema = new Schema<IPost>(
+    {
+        message: { type: String, required: true },
+        userId: { type: String, required: true },
+        likes: { type: [String], default: [] },
+        imageUrl: { type: String },
+    },
+    { timestamps: true }
+);
 
-const PostModel = mongoose.model<IPost>("Post", postSchema);
-
-export default PostModel;
+export default mongoose.model<IPost>("Post", postSchema);

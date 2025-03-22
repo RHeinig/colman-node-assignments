@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs";
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import User from "../models/user";
+import User, { IUser } from "../models/user";
 import { OAuth2Client } from "google-auth-library";
 import dotenv from "dotenv";
 
@@ -24,6 +24,16 @@ const storage = multer.diskStorage({
   },
 });
 
+const getPublicUserData = ({ _id, email, name, username, picture }: IUser) => {
+  return {
+    _id,
+    email,
+    name,
+    username,
+    picture,
+  };
+};
+
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
@@ -38,7 +48,7 @@ const upload = multer({
       cb(new Error("Error: Images Only!"));
     }
   },
-  limits: { fileSize: 5*1024*1024 },
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 const uploadDir = "uploads/";
@@ -266,7 +276,12 @@ const getUserById = async (req: Request, res: Response, next: NextFunction) => {
     if (!user) {
       return res.status(404).send({ Message: "User not found" });
     }
-    res.status(200).send(user);
+    if (user._id.toString() !== req.user?.id) {
+      const publicUserData = getPublicUserData(user);
+      res.status(200).send(publicUserData);
+    } else {
+      res.status(200).send(user);
+    }
   } catch (error) {
     next(error);
   }
@@ -277,7 +292,7 @@ const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).send({ Message: "Unauthorized" });
     }
-    console.log(req.user);
+
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).send({ Message: "User not found" });
@@ -291,7 +306,8 @@ const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
 const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { updatedUser } = req.body;
+    let { updatedUser } = req.body;
+    updatedUser = JSON.parse(updatedUser);
     const user = await User.findById(id);
 
     if (!user) {
@@ -299,11 +315,10 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     if (req.file) {
-      user.picture = `/uploads/${req.file.filename}`;
+      updatedUser.picture = `/uploads/${req.file.filename}`;
     }
 
-    user.set(updatedUser);
-    await user.save();
+    await User.updateOne({ _id: id }, { $set: updatedUser });
     res.status(200).send({ Message: "User updated successfully" });
   } catch (error) {
     next(error);

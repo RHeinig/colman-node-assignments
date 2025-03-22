@@ -21,4 +21,23 @@ const authorize = async (req: Request, res: Response, next: NextFunction) => {
   );
 };
 
-export { authorize };
+const optionalAuthorize = async (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers[AUTHORIZATION_HEADER_FIELD];
+  const token = authHeader?.split(" ")?.at(1);
+  if (!token) {
+    return next();
+  }
+  jwt.verify(
+    token,
+    process.env.ACCESS_TOKEN_SECRET as string,
+    (error, userInfo) => {
+      if (error) {
+        next();
+      }
+      req.user = userInfo as { id: string };
+      next();
+    }
+  );
+};
+
+export { authorize, optionalAuthorize };
