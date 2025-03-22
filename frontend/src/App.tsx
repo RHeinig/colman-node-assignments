@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Register from "./pages/Register";
 import { fetchAccessToken, removeCookie } from "./utils/auth";
+import GlobalContext, { User } from "./contexts/global";
 
 axios.defaults.baseURL = "http://localhost:3000";
 axios.defaults.withCredentials = true;
@@ -21,7 +22,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
-
+  const [user, setUser] = useState<User>();
   useEffect(() => {
     const fetchToken = async () => {
       setIsLoggedIn(await fetchAccessToken());
@@ -45,30 +46,32 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="container mt-5">
-      {isLoggedIn && (
-        <div className="d-flex justify-content-end mb-3">
-          <button
-            className="btn btn-danger btn-sm"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-        </div>
-      )}
-      <Routes>
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
-        <Route path="auth/google/callback" element={<Navigate to="/login" />} />
-        <Route path="/profile/:id?" element={<Profile />} />
-        <Route
-          path="/"
-          element={
-            isLoggedIn ? <Navigate to="/profile" /> : <Navigate to="/login" />
-          }
-        />
-      </Routes>
-    </div>
+    <GlobalContext.Provider value={{ user, setUser }}>
+      <div className="container mt-5">
+        {isLoggedIn && (
+          <div className="d-flex justify-content-end mb-3">
+            <button
+              className="btn btn-danger btn-sm"
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
+          </div>
+        )}
+        <Routes>
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+          <Route path="auth/google/callback" element={<Navigate to="/login" />} />
+          <Route path="/profile/:id?" element={<Profile />} />
+          <Route
+            path="/"
+            element={
+              isLoggedIn ? <Navigate to="/profile" /> : <Navigate to="/login" />
+            }
+          />
+        </Routes>
+      </div>
+    </GlobalContext.Provider>
   );
 };
 
