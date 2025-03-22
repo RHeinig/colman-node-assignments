@@ -87,6 +87,7 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
     try {
       await axios.delete(`/post/${post._id}`);
       onDelete(post._id);
+      alert("Post deleted successfully");
     } catch (error) {
       console.error("Error deleting post:", error);
       alert("Failed to delete the post");
@@ -108,6 +109,7 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
     try {
       const formData = new FormData();
       formData.append("message", editedMessage);
+
       if (editedImage) {
         formData.append("image", editedImage);
       }
@@ -119,7 +121,7 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
       });
 
       setDisplayMessage(response.data.message);
-      setDisplayImageUrl(BACKEND_URL + response.data.imageUrl);
+      setDisplayImageUrl(response.data.imageUrl ? `${BACKEND_URL}${response.data.imageUrl}` : "");
 
       setIsEditing(false);
       setEditedImage(null);
@@ -130,6 +132,8 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
           imageUrl: response.data.imageUrl,
         });
       }
+
+      alert("Post updated successfully");
     } catch (error) {
       console.error("Error updating post:", error);
       alert("Failed to update the post");
