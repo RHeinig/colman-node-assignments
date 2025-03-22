@@ -91,6 +91,7 @@ const Home: React.FC = () => {
     useEffect(() => {
         const fetchPosts = async () => {
             try {
+                console.log(`/post/?start=${start}&limit=${limit}${showOnlyMyPosts && user ? `&sender=${user._id}` : ""}`)
                 const response = await axios.get(`/post/?start=${start}&limit=${limit}${showOnlyMyPosts && user ? `&sender=${user._id}` : ""}`);
                 setPosts(response.data);
             } catch (err) {
@@ -159,7 +160,7 @@ const Home: React.FC = () => {
 
     return (
         <div className="container py-4">
-            <h1 className="display-4 mb-4">Home Feed</h1>
+            <h1 className="display-4 mb-4">Feed</h1>
             <div className="mb-3">
                 <button className={`btn ${showOnlyMyPosts ? "btn-primary" : "btn-secondary"}`} onClick={() => setShowOnlyMyPosts(prev => {
                     setStart(0)
@@ -171,57 +172,100 @@ const Home: React.FC = () => {
                 </button>
             </div>
 
-            <div className="card mb-4">
-                <div className="card-body">
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                                setSelectedImage(file);
-                            }
-                        }}
-                    />
-                    {selectedImage && (
-                        <div className="mt-3">
-                            <img
-                                src={URL.createObjectURL(selectedImage)}
-                                alt="Post"
-                                className="img-fluid rounded"
-                                style={{ maxHeight: '400px', width: 'auto' }}
-                            />
-                        </div>
-                    )}
-
+            <div className="card mb-4 shadow-sm">
+                <div className="card-body p-4">
+                    <h5 className="card-title mb-3">Create a Post</h5>
 
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <div className="mb-3">
                             <textarea
-                                className="form-control"
+                                className={`form-control ${errors.message ? 'is-invalid' : ''}`}
                                 placeholder="What's on your mind?"
                                 rows={3}
                                 {...register("message")}
                             />
-
                             {errors.message && (
-                                <div className="text-danger mt-1">
+                                <div className="invalid-feedback">
                                     {errors.message.message}
                                 </div>
                             )}
                         </div>
-                        <button type="submit" className="btn btn-primary">
-                            Add Post
-                        </button>
+
+                        <div className="mb-4">
+                            <div className="d-flex align-items-center">
+                                <label htmlFor="image-upload" className="btn btn-outline-secondary me-2">
+                                    Add Photo
+                                </label>
+                                <input
+                                    id="image-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    className="d-none"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            setSelectedImage(file);
+                                        }
+                                    }}
+                                />
+
+                                {selectedImage && (
+                                    <span className="text-muted">
+                                        {selectedImage.name.length > 25
+                                            ? selectedImage.name.substring(0, 22) + '...'
+                                            : selectedImage.name}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        {selectedImage && (
+                            <div className="position-relative mb-4">
+                                <img
+                                    src={URL.createObjectURL(selectedImage)}
+                                    alt="Post preview"
+                                    className="img-fluid rounded w-100"
+                                    style={{ maxHeight: '300px', objectFit: 'contain' }}
+                                />
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-light position-absolute top-0 end-0 m-2 rounded-circle"
+                                    onClick={() => setSelectedImage(null)}
+                                    style={{ width: '32px', height: '32px' }}
+                                >
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="d-flex justify-content-between">
+                            <button
+                                type="button"
+                                className="btn btn-outline-primary d-flex align-items-center"
+                                onClick={() => {
+                                    axios.post('/post/generate-post-suggestion', {
+                                        prompt: getValues("message") || "What's on your mind?"
+                                    })
+                                        .then((res) => {
+                                            setValue("message", res.data.post);
+                                        })
+                                        .catch(err => {
+                                            console.error("Failed to generate suggestion:", err);
+                                        });
+                                }}
+                            >
+                                Generate Suggestion
+                            </button>
+
+                            <button
+                                type="submit"
+                                className="btn btn-primary d-flex align-items-center"
+                            >
+                                Post
+                            </button>
+                        </div>
                     </form>
-                    <button className="btn btn-secondary" onClick={() => {
-                        axios.post('/post/generate-post-suggestion', { prompt: getValues("message") || "What's on your mind?" }).then((res) => {
-                            setValue("message", res.data.post);
-                        });
-                    }}>Generate Post Suggestion</button>
                 </div>
             </div>
-
             <div className="row g-4">
                 {allPosts.map((post, index) => (
                     <div key={index} className="col-12">
