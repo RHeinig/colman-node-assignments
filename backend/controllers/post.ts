@@ -55,8 +55,10 @@ const getAllPosts = async (req: Request, res: Response, next: NextFunction) => {
     if (req.query.sender) {
       return next("route");
     }
-
-    const posts = await Post.find();
+    const { start = 0, limit = 10 } = req.query;
+    const startNumber = parseInt(start as string);
+    const limitNumber = parseInt(limit as string);
+    const posts = await Post.find().sort({ createdAt: -1 }).skip(startNumber).limit(limitNumber);
     res.status(200).send(posts);
   } catch (error) {
     next(error);
@@ -95,8 +97,10 @@ const getPostsBySender = async (
       });
     }
     const senderIdObject = new mongoose.Types.ObjectId(senderId as string);
-    console.log(senderIdObject);
-    const posts = await Post.find({ userId: senderIdObject });
+    const { start = 0, limit = 10 } = req.query;
+    const startNumber = parseInt(start as string);
+    const limitNumber = parseInt(limit as string);
+    const posts = await Post.find({ userId: senderIdObject }).sort({ createdAt: -1 }).skip(startNumber).limit(limitNumber);
     res.status(200).send(posts);
   } catch (error) {
     next(error);

@@ -105,6 +105,18 @@ router.get("/:post_id", Post.getPostById);
  *      description: Get all posts by a specific sender
  *      schema:
  *       type: string
+ *    - in: query   
+ *      name: start
+ *      required: false
+ *      description: The start index of the posts
+ *      schema:
+ *       type: number
+ *    - in: query
+ *      name: limit
+ *      required: false
+ *      description: The number of posts to return
+ *      schema:
+ *       type: number
  *   responses:
  *    200:
  *     description: The list of posts is returned
