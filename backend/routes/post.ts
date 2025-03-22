@@ -225,9 +225,11 @@ router.post("/:post_id/like", authorize, Post.likePost);
  *        image:
  *         type: string
  *         format: binary
+ *        postId:   
+ *         type: string
  *       required:
  *        - image
- *
+ *        - postId
  *   responses:
  *    200:
  *     description: The image is uploaded

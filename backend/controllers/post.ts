@@ -3,6 +3,7 @@ import Post from "../models/post";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import mongoose from "mongoose";
 
 
 const storage = multer.diskStorage({
@@ -87,7 +88,15 @@ const getPostsBySender = async (
   const senderId = req.query.sender;
 
   try {
-    const posts = await Post.find({ userId: senderId });
+    if (!senderId) {
+      return res.status(400).send({
+        Status: "Bad Request",
+        Message: "Sender ID is required",
+      });
+    }
+    const senderIdObject = new mongoose.Types.ObjectId(senderId as string);
+    console.log(senderIdObject);
+    const posts = await Post.find({ userId: senderIdObject });
     res.status(200).send(posts);
   } catch (error) {
     next(error);
