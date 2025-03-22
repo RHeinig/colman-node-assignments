@@ -81,7 +81,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
             <div className="card-header bg-white border-bottom py-3">
                 <div className="d-flex align-items-center">
                     <div>
-                        <h6 className="card-title mb-0 fw-bold">{author?.name}</h6>
+                        <h6 className="card-title mb-0 fw-bold">{author?.name || author?.email}</h6>
                     </div>
                 </div>
             </div>
@@ -94,8 +94,8 @@ const Post: React.FC<PostProps> = ({ post }) => {
 
 
                 <div className="d-flex gap-2">
-                    <span>{likes.length}</span>
-                    <span>{comments.length}</span>
+                    <span>Likes: {likes.length}</span>
+                    <span>Comments: {comments.length}</span>
                 </div>
 
                 <div className="d-flex gap-2">

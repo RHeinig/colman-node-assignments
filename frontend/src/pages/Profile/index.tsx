@@ -5,6 +5,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { FaPencilAlt as Pencil } from "react-icons/fa";
 import GlobalContext from "../../contexts/global";
 import { BACKEND_URL } from "../../App";
+import Post from "../../components/Post";
+
 interface Profile {
   _id: string;
   name: string;
@@ -12,11 +14,19 @@ interface Profile {
   profileImage?: string;
 }
 
+interface PostData {
+  _id: string;
+  message: string;
+  likes: string[];
+  userId: string;
+  imageUrl?: string;
+}
 
 const Profile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [profile, setProfile] = useState<Profile>();
   const [picture, setPicture] = useState<string>("");
+  const [userPosts, setUserPosts] = useState<PostData[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [name, setName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
@@ -25,7 +35,6 @@ const Profile: React.FC = () => {
   const [isOwner, setIsOwner] = useState(false);
   const navigate = useNavigate();
   const { setUser } = useContext(GlobalContext);
-
 
   const getUserPicture = (picturePath: string) => {
     if (!picturePath) {
@@ -97,6 +106,21 @@ const Profile: React.FC = () => {
     }
   };
 
+  const getImageUrl = (picturePath?: string) => {
+    if (!picturePath) {
+      return "";
+    }
+    if (picturePath.startsWith("https://")) {
+      return picturePath;
+    } else {
+      if (picturePath.startsWith("/uploads/")) {
+        return `${BACKEND_URL}${picturePath}`;
+      }
+    }
+
+    return "";
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -107,6 +131,7 @@ const Profile: React.FC = () => {
         if (response.data?.tokens) {
           setUser(response.data);
           setIsOwner(true);
+          getUserPosts(response.data._id);
         }
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.status === 401) {
@@ -121,9 +146,20 @@ const Profile: React.FC = () => {
       }
     };
 
+    const getUserPosts = async (_id: string) => {
+      try {
+        const response = await axios.get(`/post?sender=${_id}`);
+        setUserPosts(response.data);
+      } catch (err) {
+        setError("Failed to fetch posts");
+        console.error("Error fetching posts:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchUser();
-  }, [id]);
+  }, [id, navigate, setUser]);
 
   if (loading) {
     return <div className="text-center mt-5">Loading...</div>;
@@ -221,6 +257,26 @@ const Profile: React.FC = () => {
           {isEditing ? "Save" : "Edit"}
         </button>
       )}
+
+      <hr className="my-4" />
+
+      <h1 className="mb-4">User's Posts</h1>
+
+      <div className="row g-4">
+        {userPosts.map((post, index) => (
+          <div key={index} className="col-12">
+            <Post
+              post={{
+                _id: post._id,
+                message: post.message,
+                likes: post?.likes,
+                userId: post?.userId,
+                imageUrl: getImageUrl(post?.imageUrl),
+              }}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
