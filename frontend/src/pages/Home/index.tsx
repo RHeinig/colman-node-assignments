@@ -27,19 +27,17 @@ const getImageUrl = (picturePath?: string) => {
   }
   if (picturePath.startsWith("https://")) {
     return picturePath;
-  } else {
-    if (picturePath.startsWith("/uploads/")) {
-      return `${BACKEND_URL}${picturePath}`;
-    }
   }
-
+  if (picturePath.startsWith("/uploads/")) {
+    return `${BACKEND_URL}${picturePath}`;
+  }
   return "";
 };
 
 const Home: React.FC = () => {
-  const [posts, setPosts] = useState<PostData[] | undefined>();
+  const [, setPosts] = useState<PostData[]>([]);
   const [allPosts, setAllPosts] = useState<PostData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [start, setStart] = useState(0);
@@ -66,7 +64,7 @@ const Home: React.FC = () => {
 
     const reachedBottom = windowHeight + scrollTop >= documentHeight - 100;
 
-    if (reachedBottom) {
+    if (reachedBottom && !loading) {
       setIsBottom(true);
     } else {
       setIsBottom(false);
@@ -75,27 +73,36 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);
-
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
   useEffect(() => {
-    if (isBottom) {
-      setStart(start + limit);
+    if (isBottom && !loading) {
+      setStart((prevStart) => prevStart + limit);
     }
-  }, [isBottom, limit, start]);
+  }, [isBottom, limit, loading]);
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
+        setLoading(true);
         const response = await axios.get(
           `/post/?start=${start}&limit=${limit}${
             showOnlyMyPosts && user ? `&sender=${user._id}` : ""
           }`
         );
-        setPosts(response.data);
+        const newPosts = response.data;
+        setPosts(newPosts);
+        // Only append new posts if they aren't already in allPosts
+        setAllPosts((prevAllPosts) => {
+          const existingIds = new Set(prevAllPosts.map((p) => p._id));
+          const uniqueNewPosts = newPosts.filter(
+            (post: PostData) => !existingIds.has(post._id)
+          );
+          return [...prevAllPosts, ...uniqueNewPosts];
+        });
       } catch (err) {
         setError("Failed to fetch posts");
         console.error("Error fetching posts:", err);
@@ -103,27 +110,9 @@ const Home: React.FC = () => {
         setLoading(false);
       }
     };
-    if (!posts || posts.length > 0) {
-      setLoading(true);
-      fetchPosts();
-    }
-  }, [start, limit, showOnlyMyPosts, user]);
 
-  useEffect(() => {
-    if (posts) {
-      setAllPosts([...allPosts, ...posts]);
-    }
-  }, [allPosts, posts]);
-
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center min-vh-100">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
-  }
+    fetchPosts();
+  }, [start, showOnlyMyPosts, user, limit]);
 
   if (error) {
     return (
@@ -138,7 +127,6 @@ const Home: React.FC = () => {
   const onSubmit = async (data: PostFormInputs) => {
     try {
       const postData: any = { ...data };
-
       const response = await axios.post("/post", postData);
 
       if (response.status === 201) {
@@ -151,11 +139,10 @@ const Home: React.FC = () => {
             "/post/upload-image",
             formData
           );
-          post.image = responseWithImage.data.imageUrl;
+          post.imageUrl = responseWithImage.data.imageUrl;
         }
-        if (posts) {
-          setPosts([post, ...posts]);
-        }
+        setAllPosts((prevAllPosts) => [post, ...prevAllPosts]);
+        setPosts((prevPosts) => [post, ...prevPosts]);
       }
     } catch (error) {
       console.error("Error creating post:", error);
@@ -164,7 +151,7 @@ const Home: React.FC = () => {
   };
 
   const handlePostDelete = (postId: string) => {
-    setPosts((prevPosts) => prevPosts?.filter((post) => post._id !== postId));
+    setPosts((prevPosts) => prevPosts.filter((post) => post._id !== postId));
     setAllPosts((prevPosts) => prevPosts.filter((post) => post._id !== postId));
   };
 
@@ -174,14 +161,12 @@ const Home: React.FC = () => {
       <div className="mb-3">
         <button
           className={`btn ${showOnlyMyPosts ? "btn-primary" : "btn-secondary"}`}
-          onClick={() =>
-            setShowOnlyMyPosts((prev) => {
-              setStart(0);
-              setPosts(undefined);
-              setAllPosts([]);
-              return !prev;
-            })
-          }
+          onClick={() => {
+            setShowOnlyMyPosts((prev) => !prev);
+            setStart(0);
+            setPosts([]);
+            setAllPosts([]);
+          }}
         >
           {showOnlyMyPosts ? "Show All Posts" : "Show Only My Posts"}
         </button>
@@ -218,7 +203,6 @@ const Home: React.FC = () => {
                 rows={3}
                 {...register("message")}
               />
-
               {errors.message && (
                 <div className="text-danger mt-1">{errors.message.message}</div>
               )}
@@ -228,7 +212,7 @@ const Home: React.FC = () => {
             </button>
           </form>
           <button
-            className="btn btn-secondary"
+            className="btn btn-secondary mt-2"
             onClick={() => {
               axios
                 .post("/post/generate-post-suggestion", {
@@ -245,15 +229,15 @@ const Home: React.FC = () => {
       </div>
 
       <div className="row g-4">
-        {allPosts.map((post, index) => (
-          <div key={index} className="col-12">
+        {allPosts.map((post) => (
+          <div key={post._id} className="col-12">
             <Post
               post={{
                 _id: post._id,
                 message: post.message,
-                likes: post?.likes,
-                userId: post?.userId,
-                imageUrl: getImageUrl(post?.imageUrl),
+                likes: post.likes,
+                userId: post.userId,
+                imageUrl: getImageUrl(post.imageUrl),
               }}
               onDelete={handlePostDelete}
             />

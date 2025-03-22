@@ -15,7 +15,10 @@ interface PostProps {
     imageUrl?: string;
   };
   onDelete: (postId: string) => void;
-  onUpdate?: (postId: string, updatedPost: { message: string; imageUrl?: string }) => void;
+  onUpdate?: (
+    postId: string,
+    updatedPost: { message: string; imageUrl?: string }
+  ) => void;
 }
 
 interface Comment {
@@ -37,12 +40,16 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
   const [likes, setLikes] = useState<string[]>(post.likes);
   const [author, setAuthor] = useState<User>();
   const [showComments, setShowComments] = useState<boolean>(false);
-  const [commentForm, setCommentForm] = useState<CommentFormInputs>({ content: "" });
+  const [commentForm, setCommentForm] = useState<CommentFormInputs>({
+    content: "",
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [editedMessage, setEditedMessage] = useState(post.message);
   const [editedImage, setEditedImage] = useState<File | null>(null);
   const [displayMessage, setDisplayMessage] = useState(post.message);
-  const [displayImageUrl, setDisplayImageUrl] = useState<string | undefined>(post.imageUrl);
+  const [displayImageUrl, setDisplayImageUrl] = useState<string | undefined>(
+    post.imageUrl
+  );
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -68,7 +75,9 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
     setCommentForm({ content: e.target.value });
   };
 
-  const handleCommentFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCommentFormSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
     const response = await axios.post(`/comment`, {
       postId: post._id,
@@ -121,7 +130,9 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
       });
 
       setDisplayMessage(response.data.message);
-      setDisplayImageUrl(response.data.imageUrl ? `${BACKEND_URL}${response.data.imageUrl}` : "");
+      setDisplayImageUrl(
+        response.data.imageUrl ? `${BACKEND_URL}${response.data.imageUrl}` : ""
+      );
 
       setIsEditing(false);
       setEditedImage(null);
@@ -164,7 +175,9 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
               </button>
               <button
                 onClick={handleEditToggle}
-                className={`btn btn-sm ${isEditing ? "btn-success" : "btn-warning"}`}
+                className={`btn btn-sm ${
+                  isEditing ? "btn-success" : "btn-warning"
+                }`}
               >
                 {isEditing ? "Save" : "Edit"}
               </button>
@@ -237,13 +250,27 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
             Show Comments
           </button>
           <Modal show={showComments} onHide={() => setShowComments(false)}>
-            <Modal.Header closeButton>
-              <Modal.Title>Comments</Modal.Title>
+            <Modal.Header closeButton className="bg-light border-bottom">
+              <Modal.Title className="text-primary fw-semibold">
+                Comments
+              </Modal.Title>
             </Modal.Header>
-            <Modal.Body>
-              {comments.map((comment) => (
-                <div key={comment._id}>{comment.content}</div>
-              ))}
+            <Modal.Body className="p-4">
+              {comments.length > 0 ? (
+                comments.map((comment) => (
+                  <div
+                    key={comment._id}
+                    className="mb-3 p-3 bg-white border rounded shadow-sm"
+                  >
+                    <p className="mb-0 text-primary fw-bold">
+                      {comment.userId}
+                    </p>
+                    <p className="mb-0 text-dark">{comment.content}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted text-center">No comments yet.</p>
+              )}
             </Modal.Body>
           </Modal>
         </div>
