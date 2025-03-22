@@ -70,6 +70,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
             "Authorization"
           ] = `Bearer ${response.data.accessToken}`;
           setIsLoggedIn(true);
+          setCookie("refreshToken", response.data.refreshToken, 7);
           navigate("/profile");
         });
       } catch (error) {
