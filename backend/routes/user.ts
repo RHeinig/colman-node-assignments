@@ -161,7 +161,7 @@ router.get("/:id", optionalAuthorize, User.getUserById);
 
 /**
  * @swagger
- * /user/info:
+ * /user:
  *  get:
  *   summary: Get user info
  *   tags: [User]

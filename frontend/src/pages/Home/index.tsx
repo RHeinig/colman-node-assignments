@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import Post from '../../components/Post';
-import axios from 'axios';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import axios from 'axios';
+import React, { useContext, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { BACKEND_URL } from '../../App';
+import Post from '../../components/Post';
+import GlobalContext from '../../contexts/global';
+
 
 interface PostData {
     _id: string;
@@ -38,10 +40,15 @@ const getImageUrl = (picturePath?: string) => {
 
 const Home: React.FC = () => {
     const [posts, setPosts] = useState<PostData[]>([]);
+    const [allPosts, setAllPosts] = useState<PostData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
-
+    const [start, setStart] = useState(0);
+    const [limit, setLimit] = useState(10);
+    const [retries, setRetries] = useState(0);
+    const [showOnlyMyPosts, setShowOnlyMyPosts] = useState(false);
+    const { user } = useContext(GlobalContext)
     const {
         register,
         handleSubmit,
@@ -50,11 +57,47 @@ const Home: React.FC = () => {
         resolver: zodResolver(postSchema),
     });
 
+    const [isBottom, setIsBottom] = useState(false);
+
+    const handleScroll = () => {
+        const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+
+        const reachedBottom = windowHeight + scrollTop >= documentHeight - 100;
+
+        if (reachedBottom) {
+            setIsBottom(true);
+        } else {
+            setIsBottom(false);
+        }
+    };
+
+
+    useEffect(() => {
+        window.addEventListener('scroll', handleScroll);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (isBottom) {
+            setStart(start + limit);
+        }
+    }, [isBottom]);
+
+
+
     useEffect(() => {
         const fetchPosts = async () => {
             try {
-                const response = await axios.get('/post/');
+                const response = await axios.get(`/post/?start=${start}&limit=${limit}${showOnlyMyPosts && user ? `&sender=${user._id}` : ""}`);
                 setPosts(response.data);
+                if (posts.length > 0) {
+                    setRetries(0);
+                }
             } catch (err) {
                 setError('Failed to fetch posts');
                 console.error('Error fetching posts:', err);
@@ -62,9 +105,16 @@ const Home: React.FC = () => {
                 setLoading(false);
             }
         };
+        if (posts.length !== 0 || retries < 3) {
+            setLoading(true);
+            fetchPosts();
+            setRetries(retries + 1);
+        }
+    }, [start, limit, showOnlyMyPosts]);
 
-        fetchPosts();
-    }, []);
+    useEffect(() => {
+        setAllPosts([...allPosts, ...posts]);
+    }, [posts]);
 
     if (loading) {
         return (
@@ -112,6 +162,17 @@ const Home: React.FC = () => {
     return (
         <div className="container py-4">
             <h1 className="display-4 mb-4">Home Feed</h1>
+            {/* show only my posts option */}
+            <div className="mb-3">
+                <button className={`btn ${showOnlyMyPosts ? "btn-primary" : "btn-secondary"}`} onClick={() => setShowOnlyMyPosts(prev => {
+                    setStart(0)
+                    setPosts([])
+                    setAllPosts([])
+                    return !prev
+                })}>
+                    {showOnlyMyPosts ? "Show All Posts" : "Show Only My Posts"}
+                </button>
+            </div>
 
             <div className="card mb-4">
                 <div className="card-body">
@@ -158,8 +219,8 @@ const Home: React.FC = () => {
             </div>
 
             <div className="row g-4">
-                {posts.map((post) => (
-                    <div key={post._id} className="col-12">
+                {allPosts.map((post, index) => (
+                    <div key={index} className="col-12">
                         <Post
                             post={{
                                 _id: post._id,
@@ -176,4 +237,4 @@ const Home: React.FC = () => {
     );
 };
 
-export default Home; 
+export default Home;
