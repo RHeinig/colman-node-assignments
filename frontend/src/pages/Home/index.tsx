@@ -48,7 +48,7 @@ const Home: React.FC = () => {
     const [showOnlyMyPosts, setShowOnlyMyPosts] = useState(false);
     const { user } = useContext(GlobalContext)
     const {
-        register,
+        register, setValue, getValues,
         handleSubmit,
         formState: { errors },
     } = useForm<PostFormInputs>({
@@ -84,14 +84,15 @@ const Home: React.FC = () => {
         if (isBottom) {
             setStart(start + limit);
         }
-    }, [isBottom, limit, start]);
+    }, [isBottom]);
+
 
 
     useEffect(() => {
         const fetchPosts = async () => {
             try {
                 const response = await axios.get(`/post/?start=${start}&limit=${limit}${showOnlyMyPosts && user ? `&sender=${user._id}` : ""}`);
-                setAllPosts((prevPosts) => [...prevPosts, ...response.data]);
+                setPosts(response.data);
             } catch (err) {
                 setError('Failed to fetch posts');
                 console.error('Error fetching posts:', err);
@@ -99,10 +100,17 @@ const Home: React.FC = () => {
                 setLoading(false);
             }
         };
-    
-        setLoading(true);
-        fetchPosts();
-    }, [start, limit, showOnlyMyPosts, user]);
+        if (!posts || posts.length > 0) {
+            setLoading(true);
+            fetchPosts();
+        }
+    }, [start, limit, showOnlyMyPosts]);
+
+    useEffect(() => {
+        if (posts) {
+            setAllPosts([...allPosts, ...posts]);
+        }
+    }, [posts]);
 
     if (loading) {
         return (
@@ -186,6 +194,7 @@ const Home: React.FC = () => {
                         </div>
                     )}
 
+
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <div className="mb-3">
                             <textarea
@@ -194,6 +203,7 @@ const Home: React.FC = () => {
                                 rows={3}
                                 {...register("message")}
                             />
+
                             {errors.message && (
                                 <div className="text-danger mt-1">
                                     {errors.message.message}
@@ -204,6 +214,11 @@ const Home: React.FC = () => {
                             Add Post
                         </button>
                     </form>
+                    <button className="btn btn-secondary" onClick={() => {
+                        axios.post('/post/generate-post-suggestion', { prompt: getValues("message") || "What's on your mind?" }).then((res) => {
+                            setValue("message", res.data.post);
+                        });
+                    }}>Generate Post Suggestion</button>
                 </div>
             </div>
 
