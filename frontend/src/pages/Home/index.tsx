@@ -84,15 +84,14 @@ const Home: React.FC = () => {
         if (isBottom) {
             setStart(start + limit);
         }
-    }, [isBottom]);
-
+    }, [isBottom, limit, start]);
 
 
     useEffect(() => {
         const fetchPosts = async () => {
             try {
                 const response = await axios.get(`/post/?start=${start}&limit=${limit}${showOnlyMyPosts && user ? `&sender=${user._id}` : ""}`);
-                setPosts(response.data);
+                setAllPosts((prevPosts) => [...prevPosts, ...response.data]);
             } catch (err) {
                 setError('Failed to fetch posts');
                 console.error('Error fetching posts:', err);
@@ -100,17 +99,10 @@ const Home: React.FC = () => {
                 setLoading(false);
             }
         };
-        if (!posts || posts.length > 0) {
-            setLoading(true);
-            fetchPosts();
-        }
-    }, [start, limit, showOnlyMyPosts, posts, user]);
-
-    useEffect(() => {
-        if (posts) {
-            setAllPosts([...allPosts, ...posts]);
-        }
-    }, [allPosts, posts]);
+    
+        setLoading(true);
+        fetchPosts();
+    }, [start, limit, showOnlyMyPosts, user]);
 
     if (loading) {
         return (
