@@ -41,7 +41,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
       setIsLoggedIn(true);
 
       setCookie("refreshToken", response.data.refreshToken, 7);
-      navigate("/profile");
+      navigate("/home");
     } catch (error) {
       setErrorMessage("Login failed. Please check your username and password.");
       console.error("Login failed", error);
@@ -71,7 +71,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
           ] = `Bearer ${response.data.accessToken}`;
           setIsLoggedIn(true);
           setCookie("refreshToken", response.data.refreshToken, 7);
-          navigate("/profile");
+          navigate("/home");
         });
       } catch (error) {
         setErrorMessage("Google login failed. Please try again.");
