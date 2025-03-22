@@ -43,6 +43,7 @@ const Home: React.FC = () => {
   const [start, setStart] = useState(0);
   const [limit] = useState(10);
   const [showOnlyMyPosts, setShowOnlyMyPosts] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
   const { user } = useContext(GlobalContext);
   const {
     register,
@@ -62,7 +63,7 @@ const Home: React.FC = () => {
     const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
     const reachedBottom = windowHeight + scrollTop >= documentHeight - 100;
 
-    setIsBottom(reachedBottom && !loading);
+    setIsBottom(reachedBottom && !loading && hasMorePosts);
   };
 
   useEffect(() => {
@@ -71,13 +72,15 @@ const Home: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (isBottom && !loading) {
+    if (isBottom && !loading && hasMorePosts) {
       setStart((prev) => prev + limit);
     }
-  }, [isBottom, limit, loading]);
+  }, [isBottom, limit, loading, hasMorePosts]);
 
   useEffect(() => {
     const fetchPosts = async () => {
+      if (!hasMorePosts) return;
+
       try {
         setLoading(true);
         const response = await axios.get(
@@ -86,6 +89,11 @@ const Home: React.FC = () => {
           }`
         );
         const newPosts = response.data;
+
+        if (newPosts.length < limit) {
+          setHasMorePosts(false);
+        }
+
         setPosts((prev) => [...prev, ...newPosts]);
         setAllPosts((prevAllPosts) => {
           const existingIds = new Set(prevAllPosts.map((p) => p._id));
@@ -102,7 +110,7 @@ const Home: React.FC = () => {
       }
     };
     fetchPosts();
-  }, [start, showOnlyMyPosts, user, limit]);
+  }, [start, showOnlyMyPosts, user, limit, hasMorePosts]);
 
   const onSubmit = async (data: PostFormInputs) => {
     try {
@@ -153,6 +161,7 @@ const Home: React.FC = () => {
             setStart(0);
             setPosts([]);
             setAllPosts([]);
+            setHasMorePosts(true);
           }}
         >
           {showOnlyMyPosts ? "Show All Posts" : "Show Only My Posts"}
@@ -264,6 +273,11 @@ const Home: React.FC = () => {
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
+        </div>
+      )}
+      {!hasMorePosts && allPosts.length > 0 && (
+        <div className="text-center my-4 text-muted">
+          No more posts to load
         </div>
       )}
     </div>
