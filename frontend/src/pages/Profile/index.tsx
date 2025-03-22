@@ -161,6 +161,10 @@ const Profile: React.FC = () => {
     fetchUser();
   }, [id, navigate, setUser]);
 
+  const handlePostDelete = (postId: string) => {
+    setUserPosts((prevPosts) => prevPosts?.filter((post) => post._id !== postId));
+  };
+
   if (loading) {
     return <div className="text-center mt-5">Loading...</div>;
   }
@@ -271,8 +275,9 @@ const Profile: React.FC = () => {
                 message: post.message,
                 likes: post?.likes,
                 userId: post?.userId,
-                imageUrl: getImageUrl(post?.imageUrl),
+                imageUrl: getImageUrl(post?.imageUrl)
               }}
+              onDelete={handlePostDelete}
             />
           </div>
         ))}
