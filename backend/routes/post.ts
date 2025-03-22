@@ -254,4 +254,41 @@ router.post("/:post_id/like", authorize, Post.likePost);
  * */
 router.post("/upload-image", authorize, Post.uploadImage);
 
+
+/**
+ * @swagger 
+ * /post/generate-post-suggestion:
+ *  post:
+ *   summary: Generate a post suggestion
+ *   tags: [Post]
+ *   security:
+ *      - Authorization: []
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     application/json:
+ *      schema:
+ *       type: object
+ *       properties:
+ *        prompt:
+ *         type: string
+ *       required:
+ *        - prompt
+ *   responses:
+ *    200:      
+ *     description: The post suggestion is generated
+ *     content:
+ *      application/json:
+ *       schema:
+ *        type: object
+ *        properties:
+ *         post:
+ *          type: string
+ *        example:
+ *         post: 'This is a post'
+ *    400:
+ *     description: Failed to generate the post suggestion
+ */
+router.post("/generate-post-suggestion", authorize, Post.generatePostSuggestion);
+
 export = router;

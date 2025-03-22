@@ -216,6 +216,45 @@ const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const generatePostSuggestion = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { prompt } = req.body;
+    const fullPrompt = `
+    You are a social media expert.
+    You are given a prompt and you need to generate a post text suggestion.
+    The post text suggestion should be a post that is relevant to the prompt.
+    The post text suggestion should be a single sentence.
+    
+    Here is the prompt:
+    ${prompt}
+    `
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMENI_API_KEY}`, {
+      method: "POST",
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: fullPrompt
+              }
+            ]
+          }
+        ]
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await response.json();
+    res.status(200).send({ post: data.candidates[0].content.parts[0].text });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+
 export = {
   getAllPosts,
   getPostById,
@@ -225,4 +264,5 @@ export = {
   deletePost,
   likePost,
   uploadImage: [upload.single("image"), uploadImage],
+  generatePostSuggestion,
 };
