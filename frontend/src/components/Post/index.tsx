@@ -12,7 +12,8 @@ interface PostProps {
         userId: string;
         likes: string[];
         imageUrl?: string;
-    }
+    };
+    onDelete: (postId: string) => void;
 }
 
 interface Comment {
@@ -28,7 +29,7 @@ const commentSchema = z.object({
 
 type CommentFormInputs = z.infer<typeof commentSchema>;
 
-const Post: React.FC<PostProps> = ({ post }) => {
+const Post: React.FC<PostProps> = ({ post, onDelete }) => {
     const [comments, setComments] = useState<Comment[]>([]);
     const { user } = useContext(GlobalContext);
     const [likes, setLikes] = useState<string[]>(post.likes);
@@ -51,7 +52,7 @@ const Post: React.FC<PostProps> = ({ post }) => {
         }
         fetchComments();
         fetchAuthor();
-    }, []);
+    }, [post._id, post.userId]);
 
     const handleCommentFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setCommentForm({
@@ -76,13 +77,26 @@ const Post: React.FC<PostProps> = ({ post }) => {
         setLikes(response.data.likes);
     }
 
+    const handleDelete = async () => {
+        try {
+            await axios.delete(`/post/${post._id}`);
+            onDelete(post._id);
+        } catch (error) {
+            console.error('Error deleting post:', error);
+            alert('Failed to delete the post');
+        }
+    }
+
     return (
         <div className="card shadow-sm mb-4">
             <div className="card-header bg-white border-bottom py-3">
-                <div className="d-flex align-items-center">
+                <div className="d-flex align-items-center justify-content-between">
                     <div>
                         <h6 className="card-title mb-0 fw-bold">{author?.name || author?.email}</h6>
                     </div>
+                    {user && user._id === post.userId && (
+                        <button onClick={handleDelete} className="btn btn-danger btn-sm">Delete</button>
+                    )}
                 </div>
             </div>
 
@@ -91,7 +105,6 @@ const Post: React.FC<PostProps> = ({ post }) => {
                 {post.imageUrl && (
                     <img src={post.imageUrl} alt="Post" className="img-fluid rounded mb-3" style={{ maxHeight: '400px', width: 'auto' }} />
                 )}
-
 
                 <div className="d-flex gap-2">
                     <span>Likes: {likes.length}</span>

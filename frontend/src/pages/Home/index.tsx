@@ -44,7 +44,7 @@ const Home: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [start, setStart] = useState(0);
-    const [limit, setLimit] = useState(10);
+    const [limit] = useState(10);
     const [showOnlyMyPosts, setShowOnlyMyPosts] = useState(false);
     const { user } = useContext(GlobalContext)
     const {
@@ -157,6 +157,11 @@ const Home: React.FC = () => {
         }
     };
 
+    const handlePostDelete = (postId: string) => {
+        setPosts((prevPosts) => prevPosts?.filter((post) => post._id !== postId));
+        setAllPosts((prevPosts) => prevPosts.filter((post) => post._id !== postId));
+    };
+
     return (
         <div className="container py-4">
             <h1 className="display-4 mb-4">Home Feed</h1>
@@ -233,6 +238,7 @@ const Home: React.FC = () => {
                                 userId: post?.userId,
                                 imageUrl: getImageUrl(post?.imageUrl),
                             }}
+                            onDelete={handlePostDelete}
                         />
                     </div>
                 ))}
