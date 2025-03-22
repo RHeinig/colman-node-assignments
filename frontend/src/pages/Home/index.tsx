@@ -104,13 +104,13 @@ const Home: React.FC = () => {
             setLoading(true);
             fetchPosts();
         }
-    }, [start, limit, showOnlyMyPosts]);
+    }, [start, limit, showOnlyMyPosts, posts, user]);
 
     useEffect(() => {
         if (posts) {
             setAllPosts([...allPosts, ...posts]);
         }
-    }, [posts]);
+    }, [allPosts, posts]);
 
     if (loading) {
         return (
