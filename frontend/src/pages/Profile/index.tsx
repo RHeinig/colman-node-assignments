@@ -275,9 +275,9 @@ const Profile: React.FC = () => {
                 message: post.message,
                 likes: post?.likes,
                 userId: post?.userId,
-                imageUrl: getImageUrl(post?.imageUrl),
-                onDelete: {handlePostDelete}
+                imageUrl: getImageUrl(post?.imageUrl)
               }}
+              onDelete={handlePostDelete}
             />
           </div>
         ))}
