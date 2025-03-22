@@ -28,16 +28,15 @@ import { authorize } from "../middlewares/authorization";
  *      type: string
  *     postId:
  *      type: string
- *     createdAt:
- *      type: string
- *      format: date-time
- *     updatedAt:
- *      type: string
- *      format: date-time
+ *     likes:   
+ *      type: array
+ *      items:
+ *       type: string
  *    example:
  *     userId: '60f7b3b4b6f1f3f8b4f3b1b2'
  *     message: 'This is a post'
  *     postId: '60f7b3b4b6f1f3f8b4f3b1b1'
+ *     likes: ['60f7b3b4b6f1f3f8b4f3b1b2', '60f7b3b4b6f1f3f8b4f3b1b3']
  */
 
 /**
@@ -182,5 +181,63 @@ router.put("/:post_id", authorize, Post.updatePost);
  *     description: Failed to delete the post
  * */
 router.delete("/:post_id", authorize, Post.deletePost);
+
+/**
+ * @swagger
+ * /post/{post_id}/like:
+ *  post:
+ *   summary: Like a post by ID
+ *   tags: [Post]
+ *   security:
+ *      - Authorization: []
+ *   parameters:
+ *    - in: path
+ *      name: post_id
+ *      required: true
+ *      description: The ID of the post
+ *   responses:
+ *    200:
+ *     description: The post is liked
+ *     content:
+ *      application/json:
+ *       schema:
+ *        $ref: '#/components/responses/PostResponse'
+ *    400:
+ *     description: Failed to like the post
+ * */
+router.post("/:post_id/like", authorize, Post.likePost);
+
+/**
+ * @swagger
+ * /post/upload-image:
+ *  post:
+ *   summary: Upload an image to a post
+ *   tags: [Post]
+ *   security:
+ *      - Authorization: []
+ *   requestBody:
+ *    required: true
+ *    content:
+ *     multipart/form-data:
+ *      schema:
+ *       type: object
+ *       properties:
+ *        image:
+ *         type: string
+ *         format: binary
+ *       required:
+ *        - image
+ *
+ *   responses:
+ *    200:
+ *     description: The image is uploaded
+ *     content:
+ *      application/json:
+ *       schema:
+ *        $ref: '#/components/responses/PostResponse'   
+ *    400:
+ *     description: Failed to upload the image
+ * */
+router.post("/upload-image", authorize, Post.uploadImage);
 
 export = router;

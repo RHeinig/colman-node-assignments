@@ -4,7 +4,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FaPencilAlt as Pencil } from "react-icons/fa";
 import GlobalContext from "../../contexts/global";
-
+import { BACKEND_URL } from "../../App";
 interface Profile {
   _id: string;
   name: string;
@@ -12,7 +12,6 @@ interface Profile {
   profileImage?: string;
 }
 
-const BACKEND_URL = "http://localhost:3000";
 
 const Profile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,7 +24,7 @@ const Profile: React.FC = () => {
   const [error, setError] = useState<string>();
   const [isOwner, setIsOwner] = useState(false);
   const navigate = useNavigate();
-  const { user, setUser } = useContext(GlobalContext);
+  const { setUser } = useContext(GlobalContext);
 
 
   const getUserPicture = (picturePath: string) => {
@@ -122,6 +121,7 @@ const Profile: React.FC = () => {
       }
     };
 
+
     fetchUser();
   }, [id]);
 
@@ -192,7 +192,7 @@ const Profile: React.FC = () => {
             </div>
             <div className="d-flex justify-content-between align-items-center mb-2">
               <strong className="text-start w-25 me-3">Name:</strong>
-              {isOwner && (
+              {isOwner && isEditing && (
                 <input
                   type="text"
                   value={name}
@@ -202,7 +202,7 @@ const Profile: React.FC = () => {
                   style={{ width: "400px" }}
                 />
               )}
-              {!isOwner && (
+              {!isEditing && (
                 <span className="text-start w-75 ms-3">{profile.name}</span>
               )}
             </div>

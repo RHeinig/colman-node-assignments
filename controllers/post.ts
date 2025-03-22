@@ -1,5 +1,38 @@
 import { NextFunction, Request, Response } from "express";
 import Post from "../models/post";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = "uploads/posts";
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png|gif/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error("Error: Images Only!"));
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
 
 const addPost = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -114,6 +147,62 @@ const deletePost = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const likePost = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { post_id: postId } = req.params;
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).send({
+        Status: "Not Found",
+        Message: `Post ${postId} not found`,
+      });
+    }
+    if (req.user?.id) {
+      if (post.likes.some(like => like.toString() === req.user?.id)) {
+        post.likes = post.likes.filter(
+          (like) => like.toString() !== req.user?.id
+        );
+      } else {
+        post.likes.push(req.user.id);
+      }
+      await post.save();
+    }
+    res.status(200).send(post);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send({ Message: "No image file provided" });
+    }
+
+    const { postId } = req.body;
+    const imageUrl = `/uploads/posts/${req.file.filename}`;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).send({ Message: "Post not found" });
+    }
+
+    if (post.imageUrl) {
+      const oldImagePath = path.join(process.cwd(), post.imageUrl);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
+
+    post.imageUrl = imageUrl;
+    await post.save();
+
+    res.status(200).send({ imageUrl });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export = {
   getAllPosts,
   getPostById,
@@ -121,4 +210,6 @@ export = {
   addPost,
   updatePost,
   deletePost,
+  likePost,
+  uploadImage: [upload.single("image"), uploadImage],
 };

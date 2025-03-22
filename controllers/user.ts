@@ -306,7 +306,8 @@ const getUserInfo = async (req: Request, res: Response, next: NextFunction) => {
 const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { updatedUser } = req.body;
+    let { updatedUser } = req.body;
+    updatedUser = JSON.parse(updatedUser);
     const user = await User.findById(id);
 
     if (!user) {
@@ -314,11 +315,10 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     if (req.file) {
-      user.picture = `/uploads/${req.file.filename}`;
+      updatedUser.picture = `/uploads/${req.file.filename}`;
     }
 
-    user.set(updatedUser);
-    await user.save();
+    await User.updateOne({ _id: id }, { $set: updatedUser });
     res.status(200).send({ Message: "User updated successfully" });
   } catch (error) {
     next(error);
