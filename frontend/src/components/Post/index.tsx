@@ -4,6 +4,7 @@ import { z } from "zod";
 import { User } from "../../contexts/global";
 import GlobalContext from "../../contexts/global";
 import Modal from "react-bootstrap/Modal";
+import { BACKEND_URL } from "../../App";
 
 interface PostProps {
   post: {
@@ -14,7 +15,7 @@ interface PostProps {
     imageUrl?: string;
   };
   onDelete: (postId: string) => void;
-  onUpdate?: (postId: string, updatedPost: { message: string; imageUrl?: string }) => void; // Added onUpdate prop
+  onUpdate?: (postId: string, updatedPost: { message: string; imageUrl?: string }) => void;
 }
 
 interface Comment {
@@ -40,7 +41,8 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedMessage, setEditedMessage] = useState(post.message);
   const [editedImage, setEditedImage] = useState<File | null>(null);
-  const [previewImage, setPreviewImage] = useState<string | undefined>(post.imageUrl);
+  const [displayMessage, setDisplayMessage] = useState(post.message);
+  const [displayImageUrl, setDisplayImageUrl] = useState<string | undefined>(post.imageUrl);
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -56,6 +58,11 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
     fetchComments();
     fetchAuthor();
   }, [post._id, post.userId]);
+
+  useEffect(() => {
+    setDisplayMessage(post.message);
+    setDisplayImageUrl(post.imageUrl);
+  }, [post.message, post.imageUrl]);
 
   const handleCommentFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCommentForm({ content: e.target.value });
@@ -91,6 +98,9 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
       handleSave();
     } else {
       setIsEditing(true);
+      setEditedMessage(displayMessage);
+      setEditedImage(null);
+      setDisplayImageUrl(displayImageUrl);
     }
   };
 
@@ -108,13 +118,16 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
         },
       });
 
+      setDisplayMessage(response.data.message);
+      setDisplayImageUrl(BACKEND_URL + response.data.imageUrl);
+
       setIsEditing(false);
-      setPreviewImage(response.data.imageUrl || post.imageUrl);
+      setEditedImage(null);
 
       if (onUpdate) {
         onUpdate(post._id, {
-          message: editedMessage,
-          imageUrl: response.data.imageUrl || post.imageUrl,
+          message: response.data.message,
+          imageUrl: response.data.imageUrl,
         });
       }
     } catch (error) {
@@ -125,10 +138,9 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-
     if (file) {
       setEditedImage(file);
-      setPreviewImage(URL.createObjectURL(file));
+      setDisplayImageUrl(URL.createObjectURL(file));
     }
   };
 
@@ -165,7 +177,7 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
             onChange={(e) => setEditedMessage(e.target.value)}
           />
         ) : (
-          <p className="card-text mb-3">{post.message}</p>
+          <p className="card-text mb-3">{displayMessage}</p>
         )}
 
         {isEditing && (
@@ -177,9 +189,9 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
           />
         )}
 
-        {(previewImage || post.imageUrl) && (
+        {displayImageUrl && (
           <img
-            src={previewImage || post.imageUrl}
+            src={displayImageUrl}
             alt="Post"
             className="img-fluid rounded mb-3"
             style={{ maxHeight: "400px", width: "auto" }}
