@@ -14,6 +14,7 @@ interface PostProps {
     imageUrl?: string;
   };
   onDelete: (postId: string) => void;
+  onUpdate?: (postId: string, updatedPost: { message: string; imageUrl?: string }) => void; // Added onUpdate prop
 }
 
 interface Comment {
@@ -29,15 +30,17 @@ const commentSchema = z.object({
 
 type CommentFormInputs = z.infer<typeof commentSchema>;
 
-const Post: React.FC<PostProps> = ({ post, onDelete }) => {
+const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const { user } = useContext(GlobalContext);
   const [likes, setLikes] = useState<string[]>(post.likes);
   const [author, setAuthor] = useState<User>();
   const [showComments, setShowComments] = useState<boolean>(false);
-  const [commentForm, setCommentForm] = useState<CommentFormInputs>({
-    content: "",
-  });
+  const [commentForm, setCommentForm] = useState<CommentFormInputs>({ content: "" });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedMessage, setEditedMessage] = useState(post.message);
+  const [editedImage, setEditedImage] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | undefined>(post.imageUrl);
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -55,23 +58,17 @@ const Post: React.FC<PostProps> = ({ post, onDelete }) => {
   }, [post._id, post.userId]);
 
   const handleCommentFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCommentForm({
-      content: e.target.value,
-    });
+    setCommentForm({ content: e.target.value });
   };
 
-  const handleCommentFormSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
+  const handleCommentFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const response = await axios.post(`/comment`, {
       postId: post._id,
       content: commentForm.content,
     });
     setComments([...comments, response.data]);
-    setCommentForm({
-      content: "",
-    });
+    setCommentForm({ content: "" });
   };
 
   const handleLike = async () => {
@@ -89,6 +86,52 @@ const Post: React.FC<PostProps> = ({ post, onDelete }) => {
     }
   };
 
+  const handleEditToggle = () => {
+    if (isEditing) {
+      handleSave();
+    } else {
+      setIsEditing(true);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("message", editedMessage);
+      if (editedImage) {
+        formData.append("image", editedImage);
+      }
+
+      const response = await axios.put(`/post/${post._id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setIsEditing(false);
+      setPreviewImage(response.data.imageUrl || post.imageUrl);
+
+      if (onUpdate) {
+        onUpdate(post._id, {
+          message: editedMessage,
+          imageUrl: response.data.imageUrl || post.imageUrl,
+        });
+      }
+    } catch (error) {
+      console.error("Error updating post:", error);
+      alert("Failed to update the post");
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (file) {
+      setEditedImage(file);
+      setPreviewImage(URL.createObjectURL(file));
+    }
+  };
+
   return (
     <div className="card shadow-sm mb-4">
       <div className="card-header bg-white border-bottom py-3">
@@ -99,18 +142,44 @@ const Post: React.FC<PostProps> = ({ post, onDelete }) => {
             </h6>
           </div>
           {user && user._id === post.userId && (
-            <button onClick={handleDelete} className="btn btn-danger btn-sm">
-              Delete
-            </button>
+            <div className="d-flex gap-2">
+              <button onClick={handleDelete} className="btn btn-danger btn-sm">
+                Delete
+              </button>
+              <button
+                onClick={handleEditToggle}
+                className={`btn btn-sm ${isEditing ? "btn-success" : "btn-warning"}`}
+              >
+                {isEditing ? "Save" : "Edit"}
+              </button>
+            </div>
           )}
         </div>
       </div>
 
       <div className="card-body">
-        <p className="card-text mb-3">{post.message}</p>
-        {post.imageUrl && (
+        {isEditing ? (
+          <textarea
+            className="form-control mb-3"
+            value={editedMessage}
+            onChange={(e) => setEditedMessage(e.target.value)}
+          />
+        ) : (
+          <p className="card-text mb-3">{post.message}</p>
+        )}
+
+        {isEditing && (
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="form-control mb-3"
+          />
+        )}
+
+        {(previewImage || post.imageUrl) && (
           <img
-            src={post.imageUrl}
+            src={previewImage || post.imageUrl}
             alt="Post"
             className="img-fluid rounded mb-3"
             style={{ maxHeight: "400px", width: "auto" }}

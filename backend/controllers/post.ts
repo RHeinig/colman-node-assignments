@@ -5,7 +5,6 @@ import path from "path";
 import fs from "fs";
 import mongoose from "mongoose";
 
-
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadDir = "uploads/posts";
@@ -16,7 +15,10 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
   },
 });
 
@@ -25,7 +27,9 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|gif/;
     const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const extname = filetypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
     if (mimetype && extname) {
       return cb(null, true);
     } else {
@@ -58,7 +62,10 @@ const getAllPosts = async (req: Request, res: Response, next: NextFunction) => {
     const { start = 0, limit = 10 } = req.query;
     const startNumber = parseInt(start as string);
     const limitNumber = parseInt(limit as string);
-    const posts = await Post.find().sort({ createdAt: -1 }).skip(startNumber).limit(limitNumber);
+    const posts = await Post.find()
+      .sort({ createdAt: -1 })
+      .skip(startNumber)
+      .limit(limitNumber);
     res.status(200).send(posts);
   } catch (error) {
     next(error);
@@ -100,7 +107,10 @@ const getPostsBySender = async (
     const { start = 0, limit = 10 } = req.query;
     const startNumber = parseInt(start as string);
     const limitNumber = parseInt(limit as string);
-    const posts = await Post.find({ userId: senderIdObject }).sort({ createdAt: -1 }).skip(startNumber).limit(limitNumber);
+    const posts = await Post.find({ userId: senderIdObject })
+      .sort({ createdAt: -1 })
+      .skip(startNumber)
+      .limit(limitNumber);
     res.status(200).send(posts);
   } catch (error) {
     next(error);
@@ -115,21 +125,44 @@ const updatePost = async (req: Request, res: Response, next: NextFunction) => {
         Message: "User is not authorized",
       });
     }
-    const post = await Post.findOneAndUpdate(
-      { _id: req.params.post_id, userId: req.user.id },
-      { $set: req.body },
-      {
-        new: true,
-      }
-    );
-    if (!post) {
-      res.status(404).send({
-        Status: "Not Found",
-        Message: `Post ${req.params.post_id} not found`,
-      });
-    } else {
-      res.status(200).send(post);
+
+    const { message } = req.body;
+    const postId = req.params.post_id;
+    const userId = req.user.id;
+
+    const updateData: { message?: string; imageUrl?: string } = {};
+    if (message) {
+      updateData.message = message;
     }
+
+    if (req.file) {
+      const imageUrl = `/uploads/posts/${req.file.filename}`;
+
+      const post = await Post.findById(postId);
+      if (post && post.imageUrl) {
+        const oldImagePath = path.join(process.cwd(), post.imageUrl);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+
+      updateData.imageUrl = imageUrl;
+    }
+
+    const updatedPost = await Post.findOneAndUpdate(
+      { _id: postId, userId },
+      { $set: updateData },
+      { new: true }
+    );
+
+    if (!updatedPost) {
+      return res.status(404).send({
+        Status: "Not Found",
+        Message: `Post ${postId} not found or you don't have permission to update it`,
+      });
+    }
+
+    res.status(200).send(updatedPost);
   } catch (error) {
     next(error);
   }
@@ -153,6 +186,13 @@ const deletePost = async (req: Request, res: Response, next: NextFunction) => {
         Message: `Post ${req.params.post_id} not found`,
       });
     } else {
+      // Delete associated image if it exists
+      if (post.imageUrl) {
+        const imagePath = path.join(process.cwd(), post.imageUrl);
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      }
       res.status(200).send(post);
     }
   } catch (error) {
@@ -171,7 +211,7 @@ const likePost = async (req: Request, res: Response, next: NextFunction) => {
       });
     }
     if (req.user?.id) {
-      if (post.likes.some(like => like.toString() === req.user?.id)) {
+      if (post.likes.some((like) => like.toString() === req.user?.id)) {
         post.likes = post.likes.filter(
           (like) => like.toString() !== req.user?.id
         );
@@ -216,7 +256,11 @@ const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const generatePostSuggestion = async (req: Request, res: Response, next: NextFunction) => {
+const generatePostSuggestion = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { prompt } = req.body;
     const fullPrompt = `
@@ -227,24 +271,27 @@ const generatePostSuggestion = async (req: Request, res: Response, next: NextFun
     
     Here is the prompt:
     ${prompt}
-    `
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMENI_API_KEY}`, {
-      method: "POST",
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: fullPrompt
-              }
-            ]
-          }
-        ]
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    `;
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMENI_API_KEY}`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: fullPrompt,
+                },
+              ],
+            },
+          ],
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
     const data = await response.json();
     res.status(200).send({ post: data.candidates[0].content.parts[0].text });
   } catch (error) {
@@ -252,15 +299,12 @@ const generatePostSuggestion = async (req: Request, res: Response, next: NextFun
   }
 };
 
-
-
-
 export = {
   getAllPosts,
   getPostById,
   getPostsBySender,
   addPost,
-  updatePost,
+  updatePost: [upload.single("image"), updatePost],
   deletePost,
   likePost,
   uploadImage: [upload.single("image"), uploadImage],
