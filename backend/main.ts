@@ -7,7 +7,7 @@ import { readFileSync } from "fs";
 import https from 'https';
 import path from "path";
 
-const { PORT, DATABASE_URL } = process.env;
+const { PORT, DATABASE_URL, HTTPS_PORT } = process.env;
 
 createApp({ mongoUri: DATABASE_URL })
   .then((app) => {
@@ -18,13 +18,14 @@ createApp({ mongoUri: DATABASE_URL })
     app.listen(Number(PORT) || 3000, '0.0.0.0', () => {
       console.log(`Server is running on port ${PORT || 3000}`);
     });
+
     if (process.env.NODE_ENV === 'production') {
       const server = https.createServer({
         key: readFileSync(path.join(__dirname, 'client-key.pem')),
         cert: readFileSync(path.join(__dirname, 'client-cert.pem')),
       }, app);
-      server.listen(Number(PORT) || 3000, '0.0.0.0', () => {
-        console.log(`Server is running on port ${PORT || 3000}`);
+      server.listen(Number(HTTPS_PORT) || 3000, '0.0.0.0', () => {
+        console.log(`Server is running on port ${HTTPS_PORT || 3000}`);
       });
     }
   })
