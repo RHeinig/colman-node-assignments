@@ -1,0 +1,31 @@
+.feed-posts .card {
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .feed-posts .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .container {
+    max-width: 1200px;
+  }
+  
+  textarea.form-control {
+    resize: vertical;
+    min-height: 120px;
+    border-color: #ced4da;
+  }
+  
+  textarea.form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  
+  .btn {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .btn:hover {
+    transform: translateY(-2px);
+  }

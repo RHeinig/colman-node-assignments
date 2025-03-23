@@ -7,16 +7,16 @@ import {
   Route,
   BrowserRouter as Router,
   Routes,
-  useNavigate,
 } from "react-router-dom";
 import "./App.css";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Register from "./pages/Register";
-import { fetchAccessToken, removeCookie } from "./utils/auth";
+import { fetchAccessToken } from "./utils/auth";
 import GlobalContext, { User } from "./contexts/global";
 import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
+
 axios.defaults.baseURL = "http://localhost:3000";
 axios.defaults.withCredentials = true;
 export const BACKEND_URL = "http://localhost:3000";
@@ -48,18 +48,21 @@ const App: React.FC = () => {
     }
   }, [isLoggedIn]);
 
-
-
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-100">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
     <GlobalContext.Provider value={{ user, setUser }}>
-      <div className="m-0 p-0">
+      <div className="app-wrapper">
         <Navbar />
-        <div className="container mt-5">
-
+        <div className="content-wrapper">
           <Routes>
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
@@ -74,7 +77,6 @@ const App: React.FC = () => {
             <Route path="/home" element={isLoggedIn ? <Home /> : <Navigate to="/login" />} />
           </Routes>
         </div>
-
       </div>
     </GlobalContext.Provider>
   );
