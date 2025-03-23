@@ -18,7 +18,13 @@ interface PostData {
   _id: string;
   message: string;
   likes: string[];
-  userId: string;
+  userId: {
+    _id: string;
+    username: string;
+    name: string;
+    email: string;
+    picture: string;
+  };
   imageUrl?: string;
 }
 
@@ -274,7 +280,7 @@ const Profile: React.FC = () => {
                 _id: post._id,
                 message: post.message,
                 likes: post?.likes,
-                userId: post?.userId,
+                userId: post.userId,
                 imageUrl: getImageUrl(post?.imageUrl)
               }}
               onDelete={handlePostDelete}
