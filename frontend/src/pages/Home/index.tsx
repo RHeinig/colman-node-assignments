@@ -8,154 +8,159 @@ import Post from "../../components/Post";
 import GlobalContext from "../../contexts/global";
 
 interface PostData {
-  _id: string;
-  message: string;
-  likes: string[];
-  userId: string;
-  imageUrl?: string;
+    _id: string;
+    message: string;
+    likes: string[];
+    userId: {
+        _id: string;
+        username: string;
+        name: string;
+        email: string;
+        picture: string;
+    };
+    imageUrl?: string;
 }
 
 const postSchema = z.object({
-  message: z.string().min(1),
+    message: z.string().min(1),
 });
 
 type PostFormInputs = z.infer<typeof postSchema>;
 
 const getImageUrl = (picturePath?: string) => {
-  if (!picturePath) {
+    if (!picturePath) {
+        return "";
+    }
+    if (picturePath.startsWith("https://")) {
+        return picturePath;
+    }
+    if (picturePath.startsWith("/uploads/")) {
+        return `${BACKEND_URL}${picturePath}`;
+    }
     return "";
-  }
-  if (picturePath.startsWith("https://")) {
-    return picturePath;
-  }
-  if (picturePath.startsWith("/uploads/")) {
-    return `${BACKEND_URL}${picturePath}`;
-  }
-  return "";
 };
 
 const Home: React.FC = () => {
-  const [posts, setPosts] = useState<PostData[]>([]);
-  const [allPosts, setAllPosts] = useState<PostData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [start, setStart] = useState(0);
-  const [limit] = useState(10);
-  const [showOnlyMyPosts, setShowOnlyMyPosts] = useState(false);
-  const [hasMorePosts, setHasMorePosts] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const { user } = useContext(GlobalContext);
-  const {
-    register,
-    setValue,
-    getValues,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<PostFormInputs>({
-    resolver: zodResolver(postSchema),
-  });
+    const [posts, setPosts] = useState<PostData[]>([]);
+    const [allPosts, setAllPosts] = useState<PostData[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [start, setStart] = useState(0);
+    const [limit] = useState(10);
+    const [showOnlyMyPosts, setShowOnlyMyPosts] = useState(false);
+    const [hasMorePosts, setHasMorePosts] = useState(true);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const { user } = useContext(GlobalContext);
+    const {
+        register,
+        setValue,
+        getValues,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<PostFormInputs>({
+        resolver: zodResolver(postSchema),
+    });
 
-  const [isBottom, setIsBottom] = useState(false);
+    const [isBottom, setIsBottom] = useState(false);
 
-  const handleScroll = () => {
-    const windowHeight = window.innerHeight;
-    const documentHeight = document.documentElement.scrollHeight;
-    const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-    const reachedBottom = windowHeight + scrollTop >= documentHeight - 100;
+    const handleScroll = () => {
+        const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        const reachedBottom = windowHeight + scrollTop >= documentHeight - 100;
 
-    setIsBottom(reachedBottom && !loading && hasMorePosts);
-  };
-
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    if (isBottom && !loading && hasMorePosts) {
-      setStart((prev) => prev + limit);
-    }
-  }, [isBottom, limit, loading, hasMorePosts]);
-
-  useEffect(() => {
-    const fetchPosts = async () => {
-      if (!hasMorePosts) return;
-
-      try {
-        setLoading(true);
-        const response = await axios.get(
-          `/post/?start=${start}&limit=${limit}${
-            showOnlyMyPosts && user ? `&sender=${user._id}` : ""
-          }`
-        );
-        const newPosts = response.data;
-
-        if (newPosts.length < limit) {
-          setHasMorePosts(false);
-        }
-
-        setPosts((prev) => [...prev, ...newPosts]);
-        setAllPosts((prevAllPosts) => {
-          const existingIds = new Set(prevAllPosts.map((p) => p._id));
-          const uniqueNewPosts = newPosts.filter(
-            (post: PostData) => !existingIds.has(post._id)
-          );
-          return [...prevAllPosts, ...uniqueNewPosts];
-        });
-      } catch (err) {
-        setError("Failed to fetch posts");
-        console.error("Error fetching posts:", err);
-      } finally {
-        setLoading(false);
-      }
+        setIsBottom(reachedBottom && !loading && hasMorePosts);
     };
-    fetchPosts();
-  }, [start, showOnlyMyPosts, user, limit, hasMorePosts]);
 
-  const onSubmit = async (data: PostFormInputs) => {
-    try {
-      const postData: any = { ...data };
-      const response = await axios.post("/post", postData);
+    useEffect(() => {
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
-      if (response.status === 201) {
-        const post = response.data;
-        if (selectedImage) {
-          const formData = new FormData();
-          formData.append("image", selectedImage);
-          formData.append("postId", post._id);
-          const responseWithImage = await axios.post("/post/upload-image", formData);
-          post.imageUrl = responseWithImage.data.imageUrl;
+    useEffect(() => {
+        if (isBottom && !loading && hasMorePosts) {
+            setStart((prev) => prev + limit);
         }
-        setPosts((prev) => [post, ...prev]);
-        setAllPosts((prev) => [post, ...prev]);
-        setValue("message", ""); // Reset form
-        setSelectedImage(null); // Clear image
-      }
-    } catch (error) {
-      console.error("Error creating post:", error);
-      setError("Failed to create post");
-    }
-  };
+    }, [isBottom, limit, loading, hasMorePosts]);
 
-  const handlePostDelete = (postId: string) => {
-    setPosts((prev) => prev.filter((post) => post._id !== postId));
-    setAllPosts((prev) => prev.filter((post) => post._id !== postId));
-  };
+    useEffect(() => {
+        const fetchPosts = async () => {
+            if (!hasMorePosts) return;
 
-  if (error) {
-    return (
-      <div className="d-flex justify-content-center align-items-center min-vh-100">
-        <div className="alert alert-danger shadow-lg p-4" role="alert">
+            try {
+                setLoading(true);
+                const response = await axios.get(
+                    `/post/?start=${start}&limit=${limit}${showOnlyMyPosts && user ? `&sender=${user._id}` : ""
+                    }`
+                );
+                const newPosts = response.data;
+
+                if (newPosts.length < limit) {
+                    setHasMorePosts(false);
+                }
+
+                setPosts((prev) => [...prev, ...newPosts]);
+                setAllPosts((prevAllPosts) => {
+                    const existingIds = new Set(prevAllPosts.map((p) => p._id));
+                    const uniqueNewPosts = newPosts.filter(
+                        (post: PostData) => !existingIds.has(post._id)
+                    );
+                    return [...prevAllPosts, ...uniqueNewPosts];
+                });
+            } catch (err) {
+                setError("Failed to fetch posts");
+                console.error("Error fetching posts:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPosts();
+    }, [start, showOnlyMyPosts, user, limit, hasMorePosts]);
+
+    const onSubmit = async (data: PostFormInputs) => {
+        try {
+            const postData: any = { ...data };
+            const response = await axios.post("/post", postData);
+
+            if (response.status === 201) {
+                const post = response.data;
+                if (selectedImage) {
+                    const formData = new FormData();
+                    formData.append("image", selectedImage);
+                    formData.append("postId", post._id);
+                    const responseWithImage = await axios.post("/post/upload-image", formData);
+                    post.imageUrl = responseWithImage.data.imageUrl;
+                }
+                setPosts((prev) => [post, ...prev]);
+                setAllPosts((prev) => [post, ...prev]);
+                setValue("message", "");
+                setSelectedImage(null);
+            }
+        } catch (error) {
+            console.error("Error creating post:", error);
+            setError("Failed to create post");
+        }
+    };
+
+    const handlePostDelete = (postId: string) => {
+        setPosts((prev) => prev.filter((post) => post._id !== postId));
+        setAllPosts((prev) => prev.filter((post) => post._id !== postId));
+    };
+
+    if (error) {
+        return (
+            <div className="d-flex justify-content-center align-items-center min-vh-100">
+                <div className="alert alert-danger shadow-lg p-4" role="alert">
           <h4 className="alert-heading">Error</h4>
           <p>{error}</p>
         </div>
-      </div>
-    );
-  }
+            </div>
+        );
+    }
 
-  return (
-    <div className="container py-5">
+    return (
+        <div className="container py-5">
       <div className="row justify-content-center">
         <div className="col-lg-8 col-md-10">
           <h1 className="display-4 mb-5 text-center fw-bold text-primary">

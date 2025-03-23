@@ -48,7 +48,8 @@ const addPost = async (req: Request, res: Response, next: NextFunction) => {
       });
     }
     const post = await Post.create({ ...req.body, userId: req.user.id });
-    res.status(201).send(post);
+    const populatedPost = await Post.findById(post._id).populate('userId', { username: 1, name: 1, email: 1, picture: 1 });
+    res.status(201).send(populatedPost);
   } catch (error) {
     next(error);
   }
@@ -65,7 +66,8 @@ const getAllPosts = async (req: Request, res: Response, next: NextFunction) => {
     const posts = await Post.find()
       .sort({ createdAt: -1 })
       .skip(startNumber)
-      .limit(limitNumber);
+      .limit(limitNumber)
+      .populate('userId', { username: 1, name: 1, email: 1, picture: 1 });
     res.status(200).send(posts);
   } catch (error) {
     next(error);
@@ -110,7 +112,8 @@ const getPostsBySender = async (
     const posts = await Post.find({ userId: senderIdObject })
       .sort({ createdAt: -1 })
       .skip(startNumber)
-      .limit(limitNumber);
+      .limit(limitNumber)
+      .populate('userId', { username: 1, name: 1, email: 1, picture: 1 });
     res.status(200).send(posts);
   } catch (error) {
     next(error);
@@ -129,6 +132,7 @@ const updatePost = async (req: Request, res: Response, next: NextFunction) => {
     const { message } = req.body;
     const postId = req.params.post_id;
     const userId = req.user.id;
+
 
     const updateData: { message?: string; imageUrl?: string } = {};
     if (message) {
@@ -150,7 +154,7 @@ const updatePost = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     const updatedPost = await Post.findOneAndUpdate(
-      { _id: postId, userId },
+      { _id: new mongoose.Types.ObjectId(postId), userId: new mongoose.Types.ObjectId(userId) },
       { $set: updateData },
       { new: true }
     );
@@ -216,7 +220,7 @@ const likePost = async (req: Request, res: Response, next: NextFunction) => {
           (like) => like.toString() !== req.user?.id
         );
       } else {
-        post.likes.push(req.user.id);
+        post.likes.push(new mongoose.Types.ObjectId(req.user?.id));
       }
       await post.save();
     }

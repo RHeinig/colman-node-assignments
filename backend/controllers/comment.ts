@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Comment from "../models/comment";
 import Post from "../models/post";
+import mongoose from "mongoose";
 
 const addComment = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -20,7 +21,8 @@ const addComment = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     const comment = await Comment.create({ ...req.body, userId: req.user.id });
-    res.status(201).send(comment);
+    const populatedComment = await Comment.findById(comment._id).populate('userId', { username: 1, name: 1, email: 1, picture: 1 });
+    res.status(201).send(populatedComment);
   } catch (error) {
     next(error);
   }
@@ -55,7 +57,7 @@ const getCommentsByPost = async (
   const { post_id: postId } = req.query;
 
   try {
-    const comments = await Comment.find({ postId });
+    const comments = await Comment.find({ postId: new mongoose.Types.ObjectId(postId as string) }).populate('userId', { username: 1, name: 1, email: 1, picture: 1 });
     res.status(200).send(comments);
   } catch (error) {
     next(error);
