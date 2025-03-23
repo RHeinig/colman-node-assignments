@@ -183,8 +183,6 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
         }
     };
 
-    console.log(user?._id, post.userId._id, user?._id === post.userId._id);
-
     return (
         <>
       <style>
