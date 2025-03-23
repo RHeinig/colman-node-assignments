@@ -50,6 +50,8 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
   const [displayImageUrl, setDisplayImageUrl] = useState<string | undefined>(
     post.imageUrl
   );
+  const [commentPosted, setCommentPosted] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -73,18 +75,35 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
 
   const handleCommentFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCommentForm({ content: e.target.value });
+    setCommentError(null);
   };
 
   const handleCommentFormSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
-    const response = await axios.post(`/comment`, {
-      postId: post._id,
-      content: commentForm.content,
-    });
-    setComments([...comments, response.data]);
-    setCommentForm({ content: "" });
+
+    // Check if the comment is empty
+    if (commentForm.content.trim().length === 0) {
+      setCommentError("The comment must not be empty");
+      return;
+    }
+
+    try {
+      const response = await axios.post(`/comment`, {
+        postId: post._id,
+        content: commentForm.content,
+      });
+      setComments([...comments, response.data]);
+      setCommentForm({ content: "" });
+      setCommentPosted(true);
+      setTimeout(() => {
+        setCommentPosted(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error posting comment:", error);
+      alert("Failed to post the comment");
+    }
   };
 
   const handleLike = async () => {
@@ -193,6 +212,23 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
           .like-comment-btn.liked:hover {
             color: #145dbf;
           }
+
+          .comment-btn {
+            transition: background-color 0.5s ease, color 0.5s ease;
+          }
+
+          .comment-btn.posted {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+            transition: background-color 0.5s ease, color 0.5s ease;
+          }
+
+          .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+          }
         `}
       </style>
       <div className="card shadow-sm mb-4">
@@ -269,19 +305,34 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
             </button>
           </div>
 
-          <form onSubmit={handleCommentFormSubmit} className="d-flex gap-2 mt-2">
-            <input
-              type="text"
-              value={commentForm.content}
-              onChange={handleCommentFormChange}
-              className="form-control"
-            />
-            <button
-              type="submit"
-              className="btn btn-primary btn-sm d-flex align-items-center gap-1"
-            >
-              Add Comment
-            </button>
+          <form onSubmit={handleCommentFormSubmit} className="d-flex gap-2 mt-2 flex-column">
+            <div className="d-flex gap-2 w-100">
+              <input
+                type="text"
+                value={commentForm.content}
+                onChange={handleCommentFormChange}
+                className="form-control"
+              />
+              <button
+                type="submit"
+                className={`btn btn-primary btn-sm d-flex align-items-center gap-1 comment-btn ${
+                  commentPosted ? "posted" : ""
+                }`}
+              >
+                {commentPosted ? (
+                  <>
+                    <i className="bi bi-check-circle me-1"></i> Comment Posted!
+                  </>
+                ) : (
+                  <>
+                    Add Comment
+                  </>
+                )}
+              </button>
+            </div>
+            {commentError && (
+              <div className="error-message">{commentError}</div>
+            )}
           </form>
           <div className="mt-2">
             <Modal show={showComments} onHide={() => setShowComments(false)}>
@@ -290,7 +341,6 @@ const Post: React.FC<PostProps> = ({ post, onDelete, onUpdate }) => {
                   Comments
                 </Modal.Title>
               </Modal.Header>
-
               <Modal.Body className="p-4">
                 {comments.length > 0 ? (
                   comments.map((comment) => (

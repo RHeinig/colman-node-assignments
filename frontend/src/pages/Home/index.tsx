@@ -274,7 +274,7 @@ const Home: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <i className="bi bi-lightbulb me-2"></i>Generate Suggestion
+                        <i className="bi bi-lightbulb me-2"></i>Generate AI Suggestion
                       </>
                     )}
                   </button>
