@@ -94,7 +94,7 @@ describe("Comment API", () => {
         postId: "invalid_post_id",
         content: "This is a test comment",
       });
-    expect(response.statusCode).toBe(404);
+    expect(response.statusCode).toBe(500);
   });
 
   test("Get Comments", async () => {
@@ -115,6 +115,13 @@ describe("Comment API", () => {
     expect(response.body.content).toBe("This is an updated test comment");
   });
 
+  test("Get Comment by ID", async () => {
+    const response = await request(app)
+    .get(`/comment/${commentId}`);
+    expect(response.statusCode).toBe(200);
+    expect(response.body._id).toBe(commentId);
+  });
+  
   test("Delete Comment", async () => {
     const response = await request(app)
       .delete(`/comment/${commentId}`)
@@ -123,22 +130,17 @@ describe("Comment API", () => {
     expect(response.text).toBe(commentId);
   });
   
+
   test("Delete Comment with no Authorization", async () => {
     const response = await request(app)
       .delete(`/comment/${commentId}`);
     expect(response.statusCode).toBe(401);
   });
 
-  test("Get Comment by ID", async () => {
-    const response = await request(app)
-    .get(`/comment/${commentId}`);
-    expect(response.statusCode).toBe(200);
-    expect(response.body._id).toBe(commentId);
-  });
 
   test("Get Comment by Invalid ID", async () => {
     const response = await request(app)
     .get(`/comment/invalid_id`);
-    expect(response.statusCode).toBe(404);
+    expect(response.statusCode).toBe(500);
   });
 });

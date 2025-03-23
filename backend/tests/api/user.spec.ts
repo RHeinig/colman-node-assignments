@@ -103,7 +103,7 @@ describe("User API", () => {
   it("Invalid Logout", async () => {
     const response = await request(app)
       .post("/user/logout")
-      .set("authorization", `Bearer ${refreshToken}`);
+      .set("authorization", `Bearer invalid_token`);
     expect(response.statusCode).toEqual(403);
   });
 });
