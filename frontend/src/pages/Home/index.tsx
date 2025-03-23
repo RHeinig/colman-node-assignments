@@ -41,7 +41,7 @@ const getImageUrl = (picturePath?: string) => {
 };
 
 const Home: React.FC = () => {
-    const [posts, setPosts] = useState<PostData[]>([]);
+    const [, setPosts] = useState<PostData[]>([]);
     const [allPosts, setAllPosts] = useState<PostData[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
