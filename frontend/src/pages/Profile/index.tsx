@@ -76,7 +76,7 @@ const Profile: React.FC = () => {
         setProfile((prev) => (prev ? { ...prev, name } : prev));
         if (selectedFile) {
           const updatedUser = await axios.get(`/user/${profile?._id}`);
-          setPicture(updatedUser.data.profileImage || "/default_profile.png");
+          setPicture(BACKEND_URL + updatedUser.data.picture || "/default_profile.png");
           setSelectedFile(null);
         }
 
