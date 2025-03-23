@@ -5,6 +5,9 @@ import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
+import http from "http";
+import https from "https";
+import fs from "fs";
 import { errorHandler } from "./middlewares/error-handling";
 import commentRouter from "./routes/comment";
 import postRouter from "./routes/post";
@@ -27,6 +30,14 @@ const createApp = async ({ mongoUri }: AppConfig) => {
     console.log("Connected to Database");
   } catch (error) {
     console.error(error, "Error connecting to Database");
+  }
+
+  if (process.env.NODE_ENV === "production") {    
+    const options = {
+      key: fs.readFileSync("./client-key.pem"),
+      cert: fs.readFileSync("./client-cert.pem"),
+    }
+    https.createServer(options, app).listen(3000);
   }
 
   if (process.env.NODE_ENV === "development") {
