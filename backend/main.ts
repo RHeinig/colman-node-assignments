@@ -12,7 +12,7 @@ createApp({ mongoUri: DATABASE_URL })
       origin: "http://localhost:3000",
       credentials: true,
     }))
-    app.listen(Number(PORT) || 3000, () => {
+    app.listen(Number(PORT) || 3000, '0.0.0.0', () => {
       console.log(`Server is running on port ${PORT || 3000}`);
     });
   })
