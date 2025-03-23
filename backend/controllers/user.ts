@@ -12,7 +12,8 @@ const SALT_ROUNDS = 10;
 const AUTHORIZATION_HEADER_FIELD = "authorization";
 
 dotenv.config();
-const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
+
+const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, JWT_TOKEN_EXPIRATION} = process.env;
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -68,13 +69,13 @@ interface JwtPayload {
 }
 
 const generateAccessToken = (userId: string) => {
-  return jwt.sign({ id: userId }, process.env.ACCESS_TOKEN_SECRET as string, {
-    expiresIn: process.env.JWT_TOKEN_EXPIRATION,
+  return jwt.sign({ id: userId }, ACCESS_TOKEN_SECRET as string, {
+    expiresIn: JWT_TOKEN_EXPIRATION,
   });
 };
 
 const generateRefreshToken = (userId: string) => {
-  return jwt.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET as string);
+  return jwt.sign({ id: userId }, REFRESH_TOKEN_SECRET as string);
 };
 
 const register = async (req: Request, res: Response, next: NextFunction) => {
@@ -106,7 +107,7 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
   }
   jwt.verify(
     token,
-    process.env.REFRESH_TOKEN_SECRET as string,
+    REFRESH_TOKEN_SECRET as string,
     async (error, userInfo) => {
       if (error) {
         return res.status(403).send(error.message);
@@ -182,7 +183,7 @@ const getGoogleLogin = async (
 
     const googleUser = await googleClient.verifyIdToken({
       idToken: googleIdToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: GOOGLE_CLIENT_ID,
     });
 
     const googlePayload = googleUser.getPayload();
@@ -241,7 +242,7 @@ const refreshToken = async (
   }
   jwt.verify(
     token,
-    process.env.REFRESH_TOKEN_SECRET as string,
+    REFRESH_TOKEN_SECRET as string,
     async (error, userInfo) => {
       if (error) {
         return res.status(403).send(error.message);
