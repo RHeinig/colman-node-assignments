@@ -309,7 +309,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
     let { updatedUser } = req.body;
     updatedUser = JSON.parse(updatedUser);
     const user = await User.findById(id);
-
+    
     if (!user) {
       return res.status(404).send({ Message: "User not found" });
     }
@@ -334,4 +334,5 @@ export default {
   getUserById,
   getUserInfo,
   updateUser: [upload.single("image"), updateUser],
+  getPublicUserData,
 };

@@ -9,6 +9,7 @@ import { describe, it, beforeAll, afterAll, expect } from "@jest/globals";
 describe("User API", () => {
   let app: Express;
   let refreshToken: string;
+  let accessToken: string;
 
   const username = `test_username_${generateRandomString(5)}`;
   const password = "test_password";
@@ -58,8 +59,48 @@ describe("User API", () => {
     expect(response.body).toHaveProperty("accessToken");
     expect(response.body).toHaveProperty("refreshToken");
     refreshToken = response.body.refreshToken;
+    accessToken = response.body.accessToken;
+  });
+
+
+  it("Get User Info", async () => {
+    const response = await request(app)
+      .get("/user")
+      .set("authorization", `Bearer ${accessToken}`);
+    expect(response.statusCode).toEqual(200);
   });
   
+  it("Update User Info", async () => {
+    const user = await User.findOne({ username });
+    const response = await request(app)
+      .put(`/user/${user?._id}`)
+      .set("authorization", `Bearer ${accessToken}`)
+      .send({
+        updatedUser: JSON.stringify({
+          name: "test name 2",
+        }),
+      });
+    expect(response.statusCode).toEqual(200);
+    expect(response.body).toHaveProperty("Message", "User updated successfully");
+  });
+
+  it("Get user by id", async () => {
+    const user = await User.findOne({ username });
+    const response = await request(app)
+      .get(`/user/${user?._id}`)
+      .set("authorization", `Bearer ${accessToken}`);
+    expect(response.statusCode).toEqual(200);
+  });
+
+  it("Update User Info with invalid body", async () => {
+    const user = await User.findOne({ username });
+    const response = await request(app)
+      .put(`/user/${user?._id}`)
+      .set("authorization", `Bearer ${accessToken}`)
+    expect(response.statusCode).toEqual(500);
+  });
+  
+
   it("User Not Found", async () => {
     const response = await request(app).post("/user/login").send({
       username: "wrong username",
@@ -89,7 +130,7 @@ describe("User API", () => {
     const response = await request(app)
       .post("/user/refreshToken")
       .set("authorization", `Bearer invalid_token`);
-      
+
     expect(response.statusCode).toEqual(403);
   });
 
@@ -105,5 +146,11 @@ describe("User API", () => {
       .post("/user/logout")
       .set("authorization", `Bearer invalid_token`);
     expect(response.statusCode).toEqual(403);
+  });
+
+
+  it("Get User Info Unauthorized", async () => {
+    const response = await request(app).get("/user");
+    expect(response.statusCode).toEqual(401);
   });
 });

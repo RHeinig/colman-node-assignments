@@ -122,6 +122,23 @@ describe("Post API", () => {
       expect(response.body.message).toBe(updatedPost.message);
     });
 
+    it("should like a post", async () => {
+      const response = await request(app)
+        .post(`/post/${postId}/like`)
+        .set("authorization", `Bearer ${accessToken}`);
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it("should like a post with invalid post id", async () => {
+      const response = await request(app)
+        .post(`/post/${new mongoose.Types.ObjectId().toHexString()}/like`)
+        .set("authorization", `Bearer ${accessToken}`);
+
+      expect(response.statusCode).toBe(404);
+      expect(response.body).toHaveProperty("Status", "Not Found");
+    });
+
     it("should return 404 if post to update is not found", async () => {
       const updatedPost = {
         title: "Non-existent Post",
