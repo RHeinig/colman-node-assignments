@@ -81,7 +81,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
   }, [navigate, setIsLoggedIn, location, googleLogin]);
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5" style={{ maxWidth: "500px" }}>
       <h2 className="mb-4">Login</h2>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-3">

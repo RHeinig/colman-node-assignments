@@ -46,7 +46,7 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5" style={{ maxWidth: "500px" }}>
       <h2 className="mb-4">Register</h2>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-3">
