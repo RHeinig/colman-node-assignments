@@ -61,7 +61,7 @@ if (!fs.existsSync(uploadDir)) {
 const googleClient = new OAuth2Client({
   clientId: GOOGLE_CLIENT_ID,
   clientSecret: GOOGLE_CLIENT_SECRET,
-  redirectUri: "http://localhost:5173/login",
+  redirectUri: "https://node81.cs.colman.ac.il/login",
 });
 
 interface JwtPayload {

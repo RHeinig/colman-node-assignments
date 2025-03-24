@@ -17,9 +17,9 @@ import GlobalContext, { User } from "./contexts/global";
 import Home from "./pages/Home";
 import Navbar from "./components/Navbar";
 
-axios.defaults.baseURL = "http://localhost:3000";
+axios.defaults.baseURL = "https://node81.cs.colman.ac.il";
 axios.defaults.withCredentials = true;
-export const BACKEND_URL = "http://localhost:3000";
+export const BACKEND_URL = "https://node81.cs.colman.ac.il";
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);

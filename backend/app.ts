@@ -9,6 +9,7 @@ import { errorHandler } from "./middlewares/error-handling";
 import commentRouter from "./routes/comment";
 import postRouter from "./routes/post";
 import userRouter from "./routes/user";
+import path from "path";
 
 dotenv.config();
 
@@ -71,10 +72,12 @@ const createApp = async ({ mongoUri }: AppConfig) => {
 
   app.use("/uploads", express.static("uploads"));
 
-  app.use((req: Request, res: Response) => {
-    res.status(404).send({ error: "Not Found" });
-  });
-  app.use(errorHandler);
+  if (process.env.NODE_ENV === "production") {
+    app.use(express.static("build"));
+    app.get("*", (req, res) => {
+      res.sendFile("index.html", { root: "build" });
+    });
+  }
 
   return app;
 };
