@@ -54,7 +54,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     },
     flow: "auth-code",
     ux_mode: "redirect",
-    redirect_uri: "http://localhost:5173/login",
+    redirect_uri:  "https://node81.cs.colman.ac.il/login",
   });
 
   useEffect(() => {
