@@ -11,7 +11,7 @@ const Navbar = () => {
         try {
             removeCookie("refreshToken");
             setUser(undefined);
-            navigate("/login");
+            navigate("/login", { replace: true });
         } catch (error) {
             console.error("Logout failed", error);
         }
