@@ -112,7 +112,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
           Login
         </button>
         <div className="mt-3">
-          <button className="btn btn-secondary" onClick={() => googleLogin()}>
+          <button className="btn btn-secondary" type="button" onClick={() => googleLogin()}>
             Login with Google
           </button>
         </div>{" "}
