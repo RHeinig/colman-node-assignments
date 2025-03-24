@@ -117,19 +117,29 @@ describe("Comment API", () => {
 
   test("Get Comment by ID", async () => {
     const response = await request(app)
-    .get(`/comment/${commentId}`);
+      .get(`/comment/${commentId}`);
     expect(response.statusCode).toBe(200);
     expect(response.body._id).toBe(commentId);
   });
-  
+
   test("Delete Comment", async () => {
+    const commentResponse = await request(app)
+      .post("/comment")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({
+        userId,
+        postId,
+        content: "This is a test comment",
+      });
+    expect(commentResponse.statusCode).toBe(201);
+    console.log(commentResponse.body);
     const response = await request(app)
-      .delete(`/comment/${commentId}`)
+      .delete(`/comment/${commentResponse.body._id}`)
       .set("Authorization", `Bearer ${accessToken}`);
     expect(response.statusCode).toBe(200);
-    expect(response.text).toBe(commentId);
+    expect(response.text).toBe(commentResponse.body._id);
   });
-  
+
 
   test("Delete Comment with no Authorization", async () => {
     const response = await request(app)
@@ -140,7 +150,7 @@ describe("Comment API", () => {
 
   test("Get Comment by Invalid ID", async () => {
     const response = await request(app)
-    .get(`/comment/invalid_id`);
+      .get(`/comment/invalid_id`);
     expect(response.statusCode).toBe(500);
   });
 });

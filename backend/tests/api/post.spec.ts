@@ -33,6 +33,16 @@ describe("Post API", () => {
     });
     accessToken = response.body.accessToken;
     userId = response.body.id;
+
+    const newPost = {
+      message: "This is a test post",
+    };
+
+    const postResponse = await request(app)
+      .post("/post")
+      .set("authorization", `Bearer ${accessToken}`)
+      .send(newPost);
+    postId = postResponse.body._id;
   });
 
   afterAll(async () => {
@@ -54,7 +64,6 @@ describe("Post API", () => {
       expect(response.statusCode).toBe(201);
       expect(response.body).toHaveProperty("_id");
       expect(response.body.message).toBe(newPost.message);
-      postId = response.body._id;
     });
 
     it("should return 401 if user is unauthorized", async () => {
@@ -80,10 +89,19 @@ describe("Post API", () => {
 
   describe("GET /post/:post_id", () => {
     it("should get a post by ID", async () => {
-      const response = await request(app).get(`/post/${postId}`);
+      const newPost = {
+        message: "This is a test post",
+      };
+
+      const postResponse = await request(app)
+        .post("/post")
+        .set("authorization", `Bearer ${accessToken}`)
+        .send(newPost);
+
+      const response = await request(app).get(`/post/${postResponse.body._id}`);
 
       expect(response.statusCode).toBe(200);
-      expect(response.body).toHaveProperty("_id", postId);
+      expect(response.body).toHaveProperty("_id", postResponse.body._id);
     });
 
     it("should return 404 if post is not found", async () => {
@@ -108,23 +126,39 @@ describe("Post API", () => {
 
   describe("PUT /post/:post_id", () => {
     it("should update a post", async () => {
+      const newPost = {
+        message: "This is a test post",
+      };
+
+      const postResponse = await request(app)
+        .post("/post")
+        .set("authorization", `Bearer ${accessToken}`)
+        .send(newPost);
       const updatedPost = {
         message: "This is an updated test post",
       };
 
       const response = await request(app)
-        .put(`/post/${postId}`)
+        .put(`/post/${postResponse.body._id}`)
         .set("authorization", `Bearer ${accessToken}`)
         .send(updatedPost);
 
       expect(response.statusCode).toBe(200);
-      expect(response.body).toHaveProperty("_id", postId);
+      expect(response.body).toHaveProperty("_id", postResponse.body._id);
       expect(response.body.message).toBe(updatedPost.message);
     });
 
     it("should like a post", async () => {
+      const newPost = {
+        message: "This is a test post",
+      };
+
+      const postResponse = await request(app)
+        .post("/post")
+        .set("authorization", `Bearer ${accessToken}`)
+        .send(newPost);
       const response = await request(app)
-        .post(`/post/${postId}/like`)
+        .post(`/post/${postResponse.body._id}/like`)
         .set("authorization", `Bearer ${accessToken}`);
 
       expect(response.statusCode).toBe(200);
@@ -164,6 +198,8 @@ describe("Post API", () => {
         .post("/post")
         .set("authorization", `Bearer ${accessToken}`)
         .send(newPost);
+
+      expect(postResponse.statusCode).toBe(201);
       const response = await request(app)
         .delete(`/post/${postResponse.body._id}`)
         .set("authorization", `Bearer ${accessToken}`);
