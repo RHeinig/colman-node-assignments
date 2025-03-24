@@ -41,7 +41,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
       setIsLoggedIn(true);
 
       setCookie("refreshToken", response.data.refreshToken, 7);
-      navigate("/home");
+      navigate("/home", { replace: true });
     } catch (error) {
       setErrorMessage("Login failed. Please check your username and password.");
       console.error("Login failed", error);
@@ -54,7 +54,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     },
     flow: "auth-code",
     ux_mode: "redirect",
-    redirect_uri:  "https://node81.cs.colman.ac.il/login",
+    redirect_uri: "https://node81.cs.colman.ac.il/login",
   });
 
   useEffect(() => {
